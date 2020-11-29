@@ -115,7 +115,9 @@ int main(int argc, char *argv[])
 	system(systemcall);
 	cout << "Creating client key pairs and signing them with CA.cert"
 		 << endl;
-	//procedure to affect each voter
+	
+	//TODO Create certificates and keys for server
+
 	for (int i = 1; i <= clientcount; ++i)
 	{
 		//creating the voter directory
