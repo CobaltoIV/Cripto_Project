@@ -130,6 +130,19 @@ depend:
 .PHONY : depend
 
 #=============================================================================
+# Target rules for targets named serverapi
+
+# Build rule for target.
+serverapi: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 serverapi
+.PHONY : serverapi
+
+# fast build rule for target.
+serverapi/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/serverapi.dir/build.make CMakeFiles/serverapi.dir/build
+.PHONY : serverapi/fast
+
+#=============================================================================
 # Target rules for targets named CA
 
 # Build rule for target.
@@ -209,6 +222,33 @@ ClientApp.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/App.dir/build.make CMakeFiles/App.dir/ClientApp.cpp.s
 .PHONY : ClientApp.cpp.s
 
+serverapi.o: serverapi.cpp.o
+
+.PHONY : serverapi.o
+
+# target to build an object file
+serverapi.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/serverapi.dir/build.make CMakeFiles/serverapi.dir/serverapi.cpp.o
+.PHONY : serverapi.cpp.o
+
+serverapi.i: serverapi.cpp.i
+
+.PHONY : serverapi.i
+
+# target to preprocess a source file
+serverapi.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/serverapi.dir/build.make CMakeFiles/serverapi.dir/serverapi.cpp.i
+.PHONY : serverapi.cpp.i
+
+serverapi.s: serverapi.cpp.s
+
+.PHONY : serverapi.s
+
+# target to generate assembly for a file
+serverapi.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/serverapi.dir/build.make CMakeFiles/serverapi.dir/serverapi.cpp.s
+.PHONY : serverapi.cpp.s
+
 # Help Target
 help:
 	@echo "The following are some of the valid targets for this Makefile:"
@@ -219,12 +259,16 @@ help:
 	@echo "... rebuild_cache"
 	@echo "... App"
 	@echo "... CA"
+	@echo "... serverapi"
 	@echo "... CA.o"
 	@echo "... CA.i"
 	@echo "... CA.s"
 	@echo "... ClientApp.o"
 	@echo "... ClientApp.i"
 	@echo "... ClientApp.s"
+	@echo "... serverapi.o"
+	@echo "... serverapi.i"
+	@echo "... serverapi.s"
 .PHONY : help
 
 

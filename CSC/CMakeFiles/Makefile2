@@ -72,6 +72,7 @@ CMAKE_BINARY_DIR = /mnt/c/Users/ricas/Documents/IST/5ºano/1sem/Cripto/Project/C
 # Directory level rules for the build root directory
 
 # The main recursive "all" target.
+all: CMakeFiles/serverapi.dir/all
 all: CMakeFiles/CA.dir/all
 all: CMakeFiles/App.dir/all
 
@@ -83,10 +84,38 @@ preinstall:
 .PHONY : preinstall
 
 # The main recursive "clean" target.
+clean: CMakeFiles/serverapi.dir/clean
 clean: CMakeFiles/CA.dir/clean
 clean: CMakeFiles/App.dir/clean
 
 .PHONY : clean
+
+#=============================================================================
+# Target rules for target CMakeFiles/serverapi.dir
+
+# All Build rule for target.
+CMakeFiles/serverapi.dir/all:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/serverapi.dir/build.make CMakeFiles/serverapi.dir/depend
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/serverapi.dir/build.make CMakeFiles/serverapi.dir/build
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/mnt/c/Users/ricas/Documents/IST/5ºano/1sem/Cripto/Project/CSC/CMakeFiles --progress-num=5,6 "Built target serverapi"
+.PHONY : CMakeFiles/serverapi.dir/all
+
+# Build rule for subdir invocation for target.
+CMakeFiles/serverapi.dir/rule: cmake_check_build_system
+	$(CMAKE_COMMAND) -E cmake_progress_start /mnt/c/Users/ricas/Documents/IST/5ºano/1sem/Cripto/Project/CSC/CMakeFiles 2
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 CMakeFiles/serverapi.dir/all
+	$(CMAKE_COMMAND) -E cmake_progress_start /mnt/c/Users/ricas/Documents/IST/5ºano/1sem/Cripto/Project/CSC/CMakeFiles 0
+.PHONY : CMakeFiles/serverapi.dir/rule
+
+# Convenience name for target.
+serverapi: CMakeFiles/serverapi.dir/rule
+
+.PHONY : serverapi
+
+# clean rule for target.
+CMakeFiles/serverapi.dir/clean:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/serverapi.dir/build.make CMakeFiles/serverapi.dir/clean
+.PHONY : CMakeFiles/serverapi.dir/clean
 
 #=============================================================================
 # Target rules for target CMakeFiles/CA.dir

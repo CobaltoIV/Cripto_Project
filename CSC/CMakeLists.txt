@@ -4,8 +4,10 @@ project(project VERSION 1.0)
 
 add_executable(CA CA.cpp)
 add_executable(App ClientApp.cpp)
+add_executable(serverapi serverapi.cpp)
 
 find_package(SEAL 3.6.0 REQUIRED)
 
 target_link_libraries(CA SEAL::seal)
 target_link_libraries(App SEAL::seal)
+target_link_libraries(serverapi SEAL::seal)
