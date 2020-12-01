@@ -1,3 +1,4 @@
-/mnt/c/Users/ricas/Documents/IST/5ºano/1sem/Cripto/Project/CSC/CMakeFiles/rebuild_cache.dir
-/mnt/c/Users/ricas/Documents/IST/5ºano/1sem/Cripto/Project/CSC/CMakeFiles/CA.dir
 /mnt/c/Users/ricas/Documents/IST/5ºano/1sem/Cripto/Project/CSC/CMakeFiles/edit_cache.dir
+/mnt/c/Users/ricas/Documents/IST/5ºano/1sem/Cripto/Project/CSC/CMakeFiles/CA.dir
+/mnt/c/Users/ricas/Documents/IST/5ºano/1sem/Cripto/Project/CSC/CMakeFiles/rebuild_cache.dir
+/mnt/c/Users/ricas/Documents/IST/5ºano/1sem/Cripto/Project/CSC/CMakeFiles/App.dir

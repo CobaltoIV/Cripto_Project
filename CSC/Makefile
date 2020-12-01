@@ -75,17 +75,6 @@ CMAKE_BINARY_DIR = /mnt/c/Users/ricas/Documents/IST/5ºano/1sem/Cripto/Project/C
 #=============================================================================
 # Targets provided globally by CMake.
 
-# Special rule for the target rebuild_cache
-rebuild_cache:
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --cyan "Running CMake to regenerate build system..."
-	/usr/bin/cmake --regenerate-during-build -S$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR)
-.PHONY : rebuild_cache
-
-# Special rule for the target rebuild_cache
-rebuild_cache/fast: rebuild_cache
-
-.PHONY : rebuild_cache/fast
-
 # Special rule for the target edit_cache
 edit_cache:
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --cyan "No interactive CMake dialog available..."
@@ -96,6 +85,17 @@ edit_cache:
 edit_cache/fast: edit_cache
 
 .PHONY : edit_cache/fast
+
+# Special rule for the target rebuild_cache
+rebuild_cache:
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --cyan "Running CMake to regenerate build system..."
+	/usr/bin/cmake --regenerate-during-build -S$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR)
+.PHONY : rebuild_cache
+
+# Special rule for the target rebuild_cache
+rebuild_cache/fast: rebuild_cache
+
+.PHONY : rebuild_cache/fast
 
 # The main all target
 all: cmake_check_build_system
@@ -142,6 +142,19 @@ CA/fast:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/CA.dir/build.make CMakeFiles/CA.dir/build
 .PHONY : CA/fast
 
+#=============================================================================
+# Target rules for targets named App
+
+# Build rule for target.
+App: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 App
+.PHONY : App
+
+# fast build rule for target.
+App/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/App.dir/build.make CMakeFiles/App.dir/build
+.PHONY : App/fast
+
 CA.o: CA.cpp.o
 
 .PHONY : CA.o
@@ -169,6 +182,33 @@ CA.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/CA.dir/build.make CMakeFiles/CA.dir/CA.cpp.s
 .PHONY : CA.cpp.s
 
+ClientApp.o: ClientApp.cpp.o
+
+.PHONY : ClientApp.o
+
+# target to build an object file
+ClientApp.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/App.dir/build.make CMakeFiles/App.dir/ClientApp.cpp.o
+.PHONY : ClientApp.cpp.o
+
+ClientApp.i: ClientApp.cpp.i
+
+.PHONY : ClientApp.i
+
+# target to preprocess a source file
+ClientApp.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/App.dir/build.make CMakeFiles/App.dir/ClientApp.cpp.i
+.PHONY : ClientApp.cpp.i
+
+ClientApp.s: ClientApp.cpp.s
+
+.PHONY : ClientApp.s
+
+# target to generate assembly for a file
+ClientApp.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/App.dir/build.make CMakeFiles/App.dir/ClientApp.cpp.s
+.PHONY : ClientApp.cpp.s
+
 # Help Target
 help:
 	@echo "The following are some of the valid targets for this Makefile:"
@@ -177,10 +217,14 @@ help:
 	@echo "... depend"
 	@echo "... edit_cache"
 	@echo "... rebuild_cache"
+	@echo "... App"
 	@echo "... CA"
 	@echo "... CA.o"
 	@echo "... CA.i"
 	@echo "... CA.s"
+	@echo "... ClientApp.o"
+	@echo "... ClientApp.i"
+	@echo "... ClientApp.s"
 .PHONY : help
 
 

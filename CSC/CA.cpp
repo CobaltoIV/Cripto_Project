@@ -46,7 +46,7 @@ int main(int argc, char *argv[])
 	//Removes previous database configuration
 	system("rm -r Admin");
 	system("rm -r Server");
-	system("rm -r ClientApp");
+	system("rm -r Clients");
 	//SEAL inits and keys generation used throughout the election process
 	EncryptionParameters parms(scheme_type::bfv);
 	size_t poly_modulus_degree = 8192;
@@ -82,28 +82,32 @@ int main(int argc, char *argv[])
 
     cout << "Server created"<< endl;
 
-	system("mkdir ClientApp");
+	system("mkdir Clients");
 
-    cout << "ClientApp created"<< endl;
+    cout << "Clients created"<< endl;
     system("mv DBpublic_key.txt Admin");
 	system("mv DBprivate_key.txt Admin");
 
 	//Generate a root CA certificate and private key
 	cout << "Generating CA cert" << endl;
-	sprintf(systemcall, "openssl req -x509 -sha512 -nodes -days 365 -newkey rsa:2048 -keyout CAprivate_key.key -out CAcert.crt -subj \"/C=PT/ST=Lisbon/L=Lisbon/O=Cripto/OU=CSC-Project/CN=CA\"%s && mv CAprivate_key.key CAcert.crt Admin", cmdout);
+	sprintf(systemcall, "openssl req -x509 -sha256 -nodes -days 365 -newkey rsa:2048 -keyout CAprivate_key.key -out CAcert.crt -subj \"/C=PT/ST=Lisbon/L=Lisbon/O=Cripto/OU=CSC-Project/CN=CA\"%s && mv CAprivate_key.key CAcert.crt Admin", cmdout);
 	system(systemcall);
     cout << "Operation successful"<<endl;
 
 
 
-	/*
 	//Signing the database public key with the CA private key
 	cout << "Signing the database public key with the CA cert" << endl;
-	sprintf(systemcall, "openssl dgst -sha512 -sign Admin/CAprivate_key.key -out /tmp/sign.sha512 Admin/DBpublic_key.txt%s",cmdout);
+	sprintf(systemcall, "openssl dgst -sha256 -sign Admin/CAprivate_key.key -out /tmp/sign.sha256 Admin/DBpublic_key.txt%s",cmdout);
 	system(systemcall);
-	sprintf(systemcall, "openssl base64 -in /tmp/sign.sha512 -out Admin/DBpublic_key_signed.txt%s", cmdout);
+	sprintf(systemcall, "openssl base64 -in /tmp/sign.sha256 -out Admin/DBpublic_key_signed.txt%s", cmdout);
 	system(systemcall);
-	*/
+
+	cout << "Signing the database private key with the CA cert" << endl;
+	sprintf(systemcall, "openssl dgst -sha256 -sign Admin/CAprivate_key.key -out /tmp/sign.sha256 Admin/DBprivate_key.txt%s",cmdout);
+	system(systemcall);
+	sprintf(systemcall, "openssl base64 -in /tmp/sign.sha256 -out Admin/DBprivate_key_signed.txt%s", cmdout);
+	system(systemcall);
 
 	// generate server key pair
 	// installing the root CA cert
@@ -113,7 +117,7 @@ int main(int argc, char *argv[])
 	sprintf(systemcall, "cd Server && openssl genrsa -out server_pk.key 1024%s && openssl req -new -key server_pk.key -out server-cert.csr -subj \"/C=PT/ST=Lisbon/L=Lisbon/O=Cripto/OU=CSC-Project/CN=Server\" %s", cmdout,cmdout);
 	system(systemcall);
 	cout<<"Signing Server Certificate with CA Private Key"<<endl;
-	//signing the server  key with the CA private key
+	//signing the server key with the CA private key
 	sprintf(systemcall, "cd Server && openssl x509 -req -in server-cert.csr -out server-cert.crt -sha1 -CA CAcert.crt -CAkey ../Admin/CAprivate_key.key -CAcreateserial -days 3650 %s", cmdout);
 	system(systemcall);
 
@@ -122,40 +126,40 @@ int main(int argc, char *argv[])
 	for (int i = 1; i <= clientcount; ++i)
 	{
 		//creating the voter directory
-		sprintf(systemcall, "cd ClientApp && mkdir Client%d", i);
+		sprintf(systemcall, "cd Clients && mkdir Client%d", i);
 		system(systemcall);
 
 		//installing the Dtabase Key Server and CA certificates
-		sprintf(systemcall, "cp Admin/DBpublic_key.txt Admin/DBprivate_key.txt Server/server-cert.crt Admin/CAcert.crt  ClientApp/Client%d", i);
+		sprintf(systemcall, "cp Admin/DBpublic_key.txt Admin/DBprivate_key.txt Server/server-cert.crt Admin/CAcert.crt Admin/DBprivate_key_signed.txt Admin/DBpublic_key_signed.txt Clients/Client%d", i);
 		system(systemcall);
 
 		//generating clients key pairs
 		sprintf(systemcall, "cd Admin && openssl genrsa -out c%dpk.key 1024%s && openssl req -new -key c%dpk.key -out c%d-cert.csr -subj \"/C=PT/ST=Lisbon/L=Lisbon/O=Cripto/OU=CSC-Project/CN=c%d\" %s", i,cmdout, i, i, i,cmdout);
 		system(systemcall);
 
-		/*
 		//signing the client private key with the CA private key
-		sprintf(systemcall, "cd Admin && openssl dgst -sha512 -sign CAprivate_key.key -out /tmp/sign.sha512 c%dpk.key %s", i,cmdout);
+		sprintf(systemcall, "cd Admin && openssl dgst -sha256 -sign CAprivate_key.key -out /tmp/sign.sha256 c%dpk.key %s", i,cmdout);
 		system(systemcall);
-		sprintf(systemcall, "cd Admin && openssl base64 -in /tmp/sign.sha512 -out c%dpk_signed.txt %s", i,cmdout);
+		sprintf(systemcall, "cd Admin && openssl base64 -in /tmp/sign.sha256 -out c%dpk_signed.txt %s", i,cmdout);
 		system(systemcall);
-		*/
 
 		//installing private key into Client dir
-		sprintf(systemcall, "cd Admin && mv c%dpk.key ../ClientApp/Client%d", i, i);
+		sprintf(systemcall, "cd Admin && mv c%dpk_signed.txt c%dpk.key ../Clients/Client%d", i, i, i);
 		system(systemcall);
+
 		//converting certificate request into actual certificate and signing it with CA private key
 		sprintf(systemcall, "cd Admin && openssl x509 -req -in c%d-cert.csr -out c%d-cert.crt -sha1 -CA CAcert.crt -CAkey CAprivate_key.key -CAcreateserial -days 3650 %s", i, i, cmdout);
 		system(systemcall);
+		
 		cout << "Client Certificate created sucessfully" << endl;
-		/*
-		sprintf(systemcall, "cd Admin && openssl dgst -sha512 -sign CAprivate_key.key -out /tmp/sign.sha512 c%d-cert.crt %s", i,cmdout);
+
+		sprintf(systemcall, "cd Admin && openssl dgst -sha256 -sign CAprivate_key.key -out /tmp/sign.sha256 c%d-cert.crt %s", i,cmdout);
 		system(systemcall);
-		sprintf(systemcall, "cd Admin && openssl base64 -in /tmp/sign.sha512 -out c%d-cert_signed.txt %s", i,cmdout);
+		sprintf(systemcall, "cd Admin && openssl base64 -in /tmp/sign.sha256 -out c%d-cert_signed.txt %s", i,cmdout);
 		system(systemcall);
-		*/
+
 		//installing client certificate
-		sprintf(systemcall, "cd Admin && mv c%d-cert.crt ../ClientApp/Client%d", i, i);
+		sprintf(systemcall, "cd Admin && mv c%d-cert_signed.txt c%d-cert.crt ../Clients/Client%d", i, i, i);
 		system(systemcall);
 	}
 
