@@ -159,6 +159,8 @@ int main(int argc, char *argv[])
 		system(systemcall);
 
 		//installing client certificate
+		sprintf(systemcall, "cd Admin && cp c%d-cert_signed.txt c%d-cert.crt ../Server", i, i);
+		system(systemcall);
 		sprintf(systemcall, "cd Admin && mv c%d-cert_signed.txt c%d-cert.crt ../Clients/Client%d", i, i, i);
 		system(systemcall);
 	}

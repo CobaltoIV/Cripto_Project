@@ -74,6 +74,7 @@ string verifysgn(char *directory, char *filename, char *signedfile, char *author
 int main(int argc, char *argv[])
 {
     int clientcount = 0, i = 1;
+    string sql;
     char cmdout[256] = "";
     char systemcall[512] = "";
     char directory[50] = "";
@@ -105,14 +106,29 @@ int main(int argc, char *argv[])
     sprintf(authority, "CAcert.crt");
     cout << verifysgn(directory, filename, signedfile, authority) << endl;
 
+
+    cout << "Input Command:";
+    getline(cin,sql);
+    ofstream out("msg.txt");
+    out << sql;
+    out.close();
+    sprintf(systemcall, "mv msg.txt Clients/Client%d", i);
+    system(systemcall);
+    // Obtain server Public key and encrypt message
+    sprintf(systemcall, "cd Clients/Client%d && openssl x509 -pubkey -in server-cert.crt -out /tmp/serverpub.key ", i);
+    system(systemcall);
+    sprintf(systemcall, "cd Clients/Client%d && openssl rsautl -encrypt -pubin -inkey /tmp/serverpub.key -in msg.txt -out msg.txt.enc",i);
+	system(systemcall);
+    // Sign message with private key from client
+    sprintf(systemcall, "cd Clients/Client%d && openssl dgst -sha256 -sign c%dpk.key -out /tmp/sign.sha256 msg.txt.enc", i,i);
+    system(systemcall);
+    sprintf(systemcall, "cd Clients/Client%d && openssl base64 -in /tmp/sign.sha256 -out msg_signed.txt.enc %s", i,cmdout);
+    system(systemcall);
+
+    // Send Encrypted message
+    sprintf(systemcall, "cd Clients/Client%d && mv msg.txt.enc msg_signed.txt.enc ../../Server", i);
+    system(systemcall);
+
+    system("./serverapi -cid 1");
     return 0;
 }
-
-/*
-    sprintf(systemcall, "cd Clients/Client%d && openssl base64 -d -in c%dpk_signed.txt -out /tmp/sign.sha256");
-    system(systemcall);
-    sprintf(systemcall, "cd Clients/Client%d && openssl x509 -pubkey -in CAcert.crt -out CApubkey.pem ");
-    system(systemcall);
-    sprintf(systemcall, "cd Clients/Client1 && openssl dgst -sha256 -verify CApubkey.pem -signature /tmp/sign.sha256 c1pk.key");
-    exec(systemcall);
-*/
