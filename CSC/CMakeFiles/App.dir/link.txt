@@ -1,0 +1,1 @@
+/usr/bin/c++ CMakeFiles/App.dir/ClientApp.cpp.o -o App  /usr/local/lib/libseal-3.6.a -pthread 
