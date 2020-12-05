@@ -1,21 +1,20 @@
 #include <iostream>
-#include <algorithm>
-#include <chrono>
-#include <cstddef>
-#include <fstream>
-#include <iomanip>
-#include <limits>
-#include <memory>
-#include <mutex>
-#include <numeric>
-#include <random>
-#include <sstream>
-#include <string>
-#include <thread>
 #include <vector>
-#include <seal/seal.h>
+#include <string>
+
 using namespace std;
-using namespace seal;
+
+int main()
+{
+    vector<string> msg {"Hello", "C++", "World", "from", "VS Code", "and the C++ extension!"};
+
+    for (const string& word : msg)
+    {
+        cout << word << " ";
+    }
+    cout << endl;
+}
+
 
 /**
  * @brief  Converts decimal number into binary

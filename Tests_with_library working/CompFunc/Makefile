@@ -67,10 +67,10 @@ RM = /usr/bin/cmake -E rm -f
 EQUALS = =
 
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = /mnt/c/Users/ricas/Documents/IST/5ºano/1sem/Cripto/Project/Git/Cripto_Project/Tests
+CMAKE_SOURCE_DIR = /mnt/c/Users/ricas/Documents/IST/5ºano/1sem/Cripto/Project/Tests
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = /mnt/c/Users/ricas/Documents/IST/5ºano/1sem/Cripto/Project/Git/Cripto_Project/Tests
+CMAKE_BINARY_DIR = /mnt/c/Users/ricas/Documents/IST/5ºano/1sem/Cripto/Project/Tests
 
 #=============================================================================
 # Targets provided globally by CMake.
@@ -99,14 +99,14 @@ edit_cache/fast: edit_cache
 
 # The main all target
 all: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start /mnt/c/Users/ricas/Documents/IST/5ºano/1sem/Cripto/Project/Git/Cripto_Project/Tests/CMakeFiles /mnt/c/Users/ricas/Documents/IST/5ºano/1sem/Cripto/Project/Git/Cripto_Project/Tests//CMakeFiles/progress.marks
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 all
-	$(CMAKE_COMMAND) -E cmake_progress_start /mnt/c/Users/ricas/Documents/IST/5ºano/1sem/Cripto/Project/Git/Cripto_Project/Tests/CMakeFiles 0
+	cd /mnt/c/Users/ricas/Documents/IST/5ºano/1sem/Cripto/Project/Tests && $(CMAKE_COMMAND) -E cmake_progress_start /mnt/c/Users/ricas/Documents/IST/5ºano/1sem/Cripto/Project/Tests/CMakeFiles /mnt/c/Users/ricas/Documents/IST/5ºano/1sem/Cripto/Project/Tests/CompFunc//CMakeFiles/progress.marks
+	cd /mnt/c/Users/ricas/Documents/IST/5ºano/1sem/Cripto/Project/Tests && $(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 CompFunc/all
+	$(CMAKE_COMMAND) -E cmake_progress_start /mnt/c/Users/ricas/Documents/IST/5ºano/1sem/Cripto/Project/Tests/CMakeFiles 0
 .PHONY : all
 
 # The main clean target
 clean:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 clean
+	cd /mnt/c/Users/ricas/Documents/IST/5ºano/1sem/Cripto/Project/Tests && $(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 CompFunc/clean
 .PHONY : clean
 
 # The main clean target
@@ -116,58 +116,60 @@ clean/fast: clean
 
 # Prepare targets for installation.
 preinstall: all
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 preinstall
+	cd /mnt/c/Users/ricas/Documents/IST/5ºano/1sem/Cripto/Project/Tests && $(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 CompFunc/preinstall
 .PHONY : preinstall
 
 # Prepare targets for installation.
 preinstall/fast:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 preinstall
+	cd /mnt/c/Users/ricas/Documents/IST/5ºano/1sem/Cripto/Project/Tests && $(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 CompFunc/preinstall
 .PHONY : preinstall/fast
 
 # clear depends
 depend:
-	$(CMAKE_COMMAND) -S$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR) --check-build-system CMakeFiles/Makefile.cmake 1
+	cd /mnt/c/Users/ricas/Documents/IST/5ºano/1sem/Cripto/Project/Tests && $(CMAKE_COMMAND) -S$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR) --check-build-system CMakeFiles/Makefile.cmake 1
 .PHONY : depend
 
-#=============================================================================
-# Target rules for targets named test
+# Convenience name for target.
+CompFunc/CMakeFiles/CompFunc.dir/rule:
+	cd /mnt/c/Users/ricas/Documents/IST/5ºano/1sem/Cripto/Project/Tests && $(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 CompFunc/CMakeFiles/CompFunc.dir/rule
+.PHONY : CompFunc/CMakeFiles/CompFunc.dir/rule
 
-# Build rule for target.
-test: cmake_check_build_system
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 test
-.PHONY : test
+# Convenience name for target.
+CompFunc: CompFunc/CMakeFiles/CompFunc.dir/rule
+
+.PHONY : CompFunc
 
 # fast build rule for target.
-test/fast:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test.dir/build.make CMakeFiles/test.dir/build
-.PHONY : test/fast
+CompFunc/fast:
+	cd /mnt/c/Users/ricas/Documents/IST/5ºano/1sem/Cripto/Project/Tests && $(MAKE) $(MAKESILENT) -f CompFunc/CMakeFiles/CompFunc.dir/build.make CompFunc/CMakeFiles/CompFunc.dir/build
+.PHONY : CompFunc/fast
 
-test.o: test.cpp.o
+comparator.o: comparator.cpp.o
 
-.PHONY : test.o
+.PHONY : comparator.o
 
 # target to build an object file
-test.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test.dir/build.make CMakeFiles/test.dir/test.cpp.o
-.PHONY : test.cpp.o
+comparator.cpp.o:
+	cd /mnt/c/Users/ricas/Documents/IST/5ºano/1sem/Cripto/Project/Tests && $(MAKE) $(MAKESILENT) -f CompFunc/CMakeFiles/CompFunc.dir/build.make CompFunc/CMakeFiles/CompFunc.dir/comparator.cpp.o
+.PHONY : comparator.cpp.o
 
-test.i: test.cpp.i
+comparator.i: comparator.cpp.i
 
-.PHONY : test.i
+.PHONY : comparator.i
 
 # target to preprocess a source file
-test.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test.dir/build.make CMakeFiles/test.dir/test.cpp.i
-.PHONY : test.cpp.i
+comparator.cpp.i:
+	cd /mnt/c/Users/ricas/Documents/IST/5ºano/1sem/Cripto/Project/Tests && $(MAKE) $(MAKESILENT) -f CompFunc/CMakeFiles/CompFunc.dir/build.make CompFunc/CMakeFiles/CompFunc.dir/comparator.cpp.i
+.PHONY : comparator.cpp.i
 
-test.s: test.cpp.s
+comparator.s: comparator.cpp.s
 
-.PHONY : test.s
+.PHONY : comparator.s
 
 # target to generate assembly for a file
-test.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test.dir/build.make CMakeFiles/test.dir/test.cpp.s
-.PHONY : test.cpp.s
+comparator.cpp.s:
+	cd /mnt/c/Users/ricas/Documents/IST/5ºano/1sem/Cripto/Project/Tests && $(MAKE) $(MAKESILENT) -f CompFunc/CMakeFiles/CompFunc.dir/build.make CompFunc/CMakeFiles/CompFunc.dir/comparator.cpp.s
+.PHONY : comparator.cpp.s
 
 # Help Target
 help:
@@ -177,10 +179,10 @@ help:
 	@echo "... depend"
 	@echo "... edit_cache"
 	@echo "... rebuild_cache"
-	@echo "... test"
-	@echo "... test.o"
-	@echo "... test.i"
-	@echo "... test.s"
+	@echo "... CompFunc"
+	@echo "... comparator.o"
+	@echo "... comparator.i"
+	@echo "... comparator.s"
 .PHONY : help
 
 
@@ -192,6 +194,6 @@ help:
 # No rule that depends on this can have commands that come from listfiles
 # because they might be regenerated.
 cmake_check_build_system:
-	$(CMAKE_COMMAND) -S$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR) --check-build-system CMakeFiles/Makefile.cmake 0
+	cd /mnt/c/Users/ricas/Documents/IST/5ºano/1sem/Cripto/Project/Tests && $(CMAKE_COMMAND) -S$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR) --check-build-system CMakeFiles/Makefile.cmake 0
 .PHONY : cmake_check_build_system
 

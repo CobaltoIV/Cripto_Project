@@ -6,7 +6,7 @@
 
 #IncludeRegexTransform: 
 
-/mnt/c/Users/ricas/Documents/IST/5ºano/1sem/Cripto/Project/Git/Cripto_Project/Tests/test.cpp
+/mnt/c/Users/ricas/Documents/IST/5ºano/1sem/Cripto/Project/Tests/test.cpp
 iostream
 -
 algorithm
@@ -36,6 +36,8 @@ string
 thread
 -
 vector
+-
+CompFunc/CompFunc.h
 -
 seal/seal.h
 -
@@ -984,5 +986,39 @@ seal/util/defines.h
 seal/util/defines.h
 /usr/local/include/SEAL-3.6/seal/seal/util/defines.h
 cstdint
+-
+
+CompFunc/CompFunc.h
+iostream
+-
+algorithm
+-
+chrono
+-
+cstddef
+-
+fstream
+-
+iomanip
+-
+limits
+-
+memory
+-
+mutex
+-
+numeric
+-
+random
+-
+sstream
+-
+string
+-
+thread
+-
+vector
+-
+seal/seal.h
 -
 

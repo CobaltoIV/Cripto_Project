@@ -4,7 +4,7 @@ set(CMAKE_DEPENDS_LANGUAGES
   )
 # The set of files for implicit dependencies of each language:
 set(CMAKE_DEPENDS_CHECK_CXX
-  "/mnt/c/Users/ricas/Documents/IST/5ºano/1sem/Cripto/Project/Git/Cripto_Project/Tests/test.cpp" "/mnt/c/Users/ricas/Documents/IST/5ºano/1sem/Cripto/Project/Git/Cripto_Project/Tests/CMakeFiles/test.dir/test.cpp.o"
+  "/mnt/c/Users/ricas/Documents/IST/5ºano/1sem/Cripto/Project/Tests/CompFunc/comparator.cpp" "/mnt/c/Users/ricas/Documents/IST/5ºano/1sem/Cripto/Project/Tests/CompFunc/CMakeFiles/CompFunc.dir/comparator.cpp.o"
   )
 set(CMAKE_CXX_COMPILER_ID "GNU")
 

@@ -18,6 +18,7 @@
 using namespace std;
 using namespace seal;
 
+
 /**
  * @brief  Converts decimal number into binary
  * @note
@@ -39,10 +40,10 @@ vector<int> d2b(int n)
 
 /**
  * @brief  Encrypts binary vector
- * @note   
- * @param  n: 
- * @param  *encryptor: 
- * @retval 
+ * @note
+ * @param  n:
+ * @param  *encryptor:
+ * @retval
  */
 vector<Ciphertext> enc_binary(vector<int> n, Encryptor *encryptor)
 {
@@ -60,9 +61,9 @@ vector<Ciphertext> enc_binary(vector<int> n, Encryptor *encryptor)
 
 /**
  * @brief  Decrypts and prints ciphertext vector
- * @note   
- * @param  n: 
- * @param  *decryptor: 
+ * @note
+ * @param  n:
+ * @param  *decryptor:
  * @retval None
  */
 void dec_prt_vec(vector<Ciphertext> n, Decryptor *decryptor)
@@ -78,8 +79,8 @@ void dec_prt_vec(vector<Ciphertext> n, Decryptor *decryptor)
 }
 /**
  * @brief  Prints int vector
- * @note   
- * @param  x: 
+ * @note
+ * @param  x:
  * @retval None
  */
 void print_vec(vector<int> x)
@@ -94,30 +95,30 @@ void print_vec(vector<int> x)
 
 /**
  * @brief  Implements NOT gate
- * @note   
- * @param  a: 
- * @param  *evaluator: 
+ * @note
+ * @param  a:
+ * @param  *evaluator:
  * @param  relinks: Keys for relinearization
- * @retval 
+ * @retval
  */
 Ciphertext NOT(Ciphertext a, Evaluator *evaluator, RelinKeys relinks)
 {
     Ciphertext a_neg, result;
     Plaintext plain_one("1");
     (*evaluator).negate(a, a_neg);
-    (*evaluator).relinearize_inplace(a_neg, relinks);
+    //(*evaluator).relinearize_inplace(a_neg, relinks);
     (*evaluator).add_plain(a_neg, plain_one, result);
-    (*evaluator).relinearize_inplace(result, relinks);
+    //(*evaluator).relinearize_inplace(result, relinks);
     return result;
 }
 /**
  * @brief  Implements AND gate
- * @note   
- * @param  a: 
- * @param  b: 
- * @param  *evaluator: 
+ * @note
+ * @param  a:
+ * @param  b:
+ * @param  *evaluator:
  * @param  relinks: Keys for relinearization
- * @retval 
+ * @retval
  */
 Ciphertext AND(Ciphertext a, Ciphertext b, Evaluator *evaluator, RelinKeys relinks)
 {
@@ -130,12 +131,12 @@ Ciphertext AND(Ciphertext a, Ciphertext b, Evaluator *evaluator, RelinKeys relin
 
 /**
  * @brief  Implements NAND gate
- * @note   
- * @param  a: 
- * @param  b: 
- * @param  *evaluator: 
+ * @note
+ * @param  a:
+ * @param  b:
+ * @param  *evaluator:
  * @param  relinks: Keys for relinearization
- * @retval 
+ * @retval
  */
 Ciphertext NAND(Ciphertext a, Ciphertext b, Evaluator *evaluator, RelinKeys relinks)
 {
@@ -145,12 +146,12 @@ Ciphertext NAND(Ciphertext a, Ciphertext b, Evaluator *evaluator, RelinKeys reli
 
 /**
  * @brief  Checks a>b condition
- * @note   
- * @param  a: 
- * @param  b: 
- * @param  *evaluator: 
+ * @note
+ * @param  a:
+ * @param  b:
+ * @param  *evaluator:
  * @param  relinks: Keys for relinearization
- * @retval 
+ * @retval
  */
 Ciphertext gt(Ciphertext a, Ciphertext b, Evaluator *evaluator, RelinKeys relinks)
 {
@@ -160,12 +161,12 @@ Ciphertext gt(Ciphertext a, Ciphertext b, Evaluator *evaluator, RelinKeys relink
 }
 /**
  * @brief  Checks a<b condition
- * @note   
- * @param  a: 
- * @param  b: 
- * @param  *evaluator: 
+ * @note
+ * @param  a:
+ * @param  b:
+ * @param  *evaluator:
  * @param  relinks: Keys for relinearization
- * @retval 
+ * @retval
  */
 Ciphertext lt(Ciphertext a, Ciphertext b, Evaluator *evaluator, RelinKeys relinks)
 {
@@ -176,12 +177,12 @@ Ciphertext lt(Ciphertext a, Ciphertext b, Evaluator *evaluator, RelinKeys relink
 
 /**
  * @brief  Implementes equality condition through a XNOR
- * @note   
- * @param  gt: 
- * @param  lt: 
- * @param  *evaluator: 
- * @param  relinks: 
- * @retval 
+ * @note
+ * @param  gt:
+ * @param  lt:
+ * @param  *evaluator:
+ * @param  relinks:
+ * @retval
  */
 Ciphertext XNOR(Ciphertext gt, Ciphertext lt, Evaluator *evaluator, RelinKeys relinks)
 {
@@ -191,12 +192,12 @@ Ciphertext XNOR(Ciphertext gt, Ciphertext lt, Evaluator *evaluator, RelinKeys re
 }
 /**
  * @brief  Implements OR gate
- * @note   
- * @param  a: 
- * @param  b: 
- * @param  *evaluator: 
+ * @note
+ * @param  a:
+ * @param  b:
+ * @param  *evaluator:
  * @param  relinks: Keys for relinearization
- * @retval 
+ * @retval
  */
 Ciphertext OR(Ciphertext a, Ciphertext b, Evaluator *evaluator, RelinKeys relinks)
 {
@@ -207,12 +208,12 @@ Ciphertext OR(Ciphertext a, Ciphertext b, Evaluator *evaluator, RelinKeys relink
 
 /**
  * @brief  Makes first comparison which doesn't need previous output
- * @note   
- * @param  A: 
- * @param  B: 
- * @param  *evaluator: 
- * @param  relinks: 
- * @retval 
+ * @note
+ * @param  A:
+ * @param  B:
+ * @param  *evaluator:
+ * @param  relinks:
+ * @retval
  */
 vector<Ciphertext> init_bit_comparator(Ciphertext A, Ciphertext B, Evaluator *evaluator, RelinKeys relinks)
 {
@@ -227,13 +228,13 @@ vector<Ciphertext> init_bit_comparator(Ciphertext A, Ciphertext B, Evaluator *ev
 
 /**
  * @brief  Implements the comparison between 2 bits taking into account more significant bits
- * @note   
- * @param  A: 
- * @param  B: 
- * @param  *evaluator: 
- * @param  prev: 
+ * @note
+ * @param  A:
+ * @param  B:
+ * @param  *evaluator:
+ * @param  prev:
  * @param  relinks: Keys for relinearization
- * @retval 
+ * @retval
  */
 vector<Ciphertext> bit_comparator(Ciphertext A, Ciphertext B, Evaluator *evaluator, vector<Ciphertext> prev, RelinKeys relinks)
 {
@@ -253,13 +254,13 @@ vector<Ciphertext> bit_comparator(Ciphertext A, Ciphertext B, Evaluator *evaluat
 
 /**
  * @brief  Implements full comparator which returns the result as a vector of 3 ciphertexts with the results of the 3 operations
- * @note   
- * @param  x: 
- * @param  y: 
- * @param  *evaluator: 
+ * @note
+ * @param  x:
+ * @param  y:
+ * @param  *evaluator:
  * @param  relinks: Keys for relinearization
- * @param  *decryptor: 
- * @retval 
+ * @param  *decryptor:
+ * @retval
  */
 vector<Ciphertext> full_homomorphic_comparator(vector<Ciphertext> x, vector<Ciphertext> y, Evaluator *evaluator, RelinKeys relinks)
 {
@@ -282,13 +283,13 @@ vector<Ciphertext> full_homomorphic_comparator(vector<Ciphertext> x, vector<Ciph
 }
 /**
  * @brief  Comparator with prints inbetween comparisons to observe the evolution of noise budget
- * @note   
- * @param  x: 
- * @param  y: 
- * @param  *evaluator: 
- * @param  relinks: 
- * @param  *decryptor: 
- * @retval 
+ * @note
+ * @param  x:
+ * @param  y:
+ * @param  *evaluator:
+ * @param  relinks:
+ * @param  *decryptor:
+ * @retval
  */
 vector<Ciphertext> full_homomorphic_comparator_debug_version(vector<Ciphertext> x, vector<Ciphertext> y, Evaluator *evaluator, RelinKeys relinks, Decryptor *decryptor)
 {
@@ -336,7 +337,7 @@ int main(int argc, char *argv[])
     size_t poly_modulus_degree = 8192;
     parms.set_poly_modulus_degree(poly_modulus_degree);
     parms.set_coeff_modulus(CoeffModulus::BFVDefault(poly_modulus_degree));
-    parms.set_plain_modulus(1024);
+    parms.set_plain_modulus(512);
     SEALContext context(parms);
     KeyGenerator keygen(context);
     PublicKey public_key;
@@ -348,8 +349,8 @@ int main(int argc, char *argv[])
     Evaluator evaluator(context);
     Decryptor decryptor(context, secret_key);
 
-    int x = 13;
-    int y = 13;
+    int x = 18;
+    int y = 20;
 
     Plaintext x_plain(to_string(x)), y_plain(to_string(y)), one_plain("1"), zero_plain("0"), result;
     cout << x_plain.to_string() << " ...... Correct." << endl;

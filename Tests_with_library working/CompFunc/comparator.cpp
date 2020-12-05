@@ -104,9 +104,9 @@ Ciphertext NOT(Ciphertext a, Evaluator *evaluator, RelinKeys relinks)
     Ciphertext a_neg, result;
     Plaintext plain_one("1");
     (*evaluator).negate(a, a_neg);
-    (*evaluator).relinearize_inplace(a_neg, relinks);
+    //(*evaluator).relinearize_inplace(a_neg, relinks);
     (*evaluator).add_plain(a_neg, plain_one, result);
-    (*evaluator).relinearize_inplace(result, relinks);
+    //(*evaluator).relinearize_inplace(result, relinks);
     return result;
 }
 /**
