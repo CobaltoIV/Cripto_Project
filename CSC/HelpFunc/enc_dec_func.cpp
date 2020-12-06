@@ -140,6 +140,23 @@ string d2h(int x)
 }
 
 /**
+ * @brief  Takes a hex string and converts it into an decimal string
+ * @note
+ * @param  x:
+ * @retval
+ */
+int h2d(string x)
+{
+    stringstream stream;
+    string aux;
+    stream << "0x"<< x;
+    stream >> hex >> aux;
+    long int result = strtol (aux.c_str(),NULL,0);
+    cout << x << " ----> " << to_string(result) << endl;
+    return result;
+}
+
+/**
  * @brief  Converts decimal number into binary
  * @note
  * @param  n: Number to be converted

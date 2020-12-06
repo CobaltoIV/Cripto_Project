@@ -36,6 +36,14 @@ string d2h(int x);
 vector<int> d2b(int n);
 
 /**
+ * @brief  Takes a hex string and converts it into an decimal string
+ * @note
+ * @param  x:
+ * @retval
+ */
+int h2d(string x);
+
+/**
  * @brief  Encrypts binary vector
  * @note   
  * @param  n: 
