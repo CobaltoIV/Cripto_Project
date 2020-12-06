@@ -67,10 +67,10 @@ RM = /usr/bin/cmake -E rm -f
 EQUALS = =
 
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = /mnt/c/Users/ricas/Documents/IST/5ºano/1sem/Cripto/Project/Git/Cripto_Project/Tests
+CMAKE_SOURCE_DIR = /mnt/c/Users/ricas/Documents/IST/5ºano/1sem/Cripto/Project/Tests
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = /mnt/c/Users/ricas/Documents/IST/5ºano/1sem/Cripto/Project/Git/Cripto_Project/Tests
+CMAKE_BINARY_DIR = /mnt/c/Users/ricas/Documents/IST/5ºano/1sem/Cripto/Project/Tests
 
 #=============================================================================
 # Targets provided globally by CMake.
@@ -99,9 +99,9 @@ edit_cache/fast: edit_cache
 
 # The main all target
 all: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start /mnt/c/Users/ricas/Documents/IST/5ºano/1sem/Cripto/Project/Git/Cripto_Project/Tests/CMakeFiles /mnt/c/Users/ricas/Documents/IST/5ºano/1sem/Cripto/Project/Git/Cripto_Project/Tests//CMakeFiles/progress.marks
+	$(CMAKE_COMMAND) -E cmake_progress_start /mnt/c/Users/ricas/Documents/IST/5ºano/1sem/Cripto/Project/Tests/CMakeFiles /mnt/c/Users/ricas/Documents/IST/5ºano/1sem/Cripto/Project/Tests//CMakeFiles/progress.marks
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 all
-	$(CMAKE_COMMAND) -E cmake_progress_start /mnt/c/Users/ricas/Documents/IST/5ºano/1sem/Cripto/Project/Git/Cripto_Project/Tests/CMakeFiles 0
+	$(CMAKE_COMMAND) -E cmake_progress_start /mnt/c/Users/ricas/Documents/IST/5ºano/1sem/Cripto/Project/Tests/CMakeFiles 0
 .PHONY : all
 
 # The main clean target
@@ -142,6 +142,32 @@ test/fast:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test.dir/build.make CMakeFiles/test.dir/build
 .PHONY : test/fast
 
+#=============================================================================
+# Target rules for targets named CompFunc
+
+# Build rule for target.
+CompFunc: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 CompFunc
+.PHONY : CompFunc
+
+# fast build rule for target.
+CompFunc/fast:
+	$(MAKE) $(MAKESILENT) -f CompFunc/CMakeFiles/CompFunc.dir/build.make CompFunc/CMakeFiles/CompFunc.dir/build
+.PHONY : CompFunc/fast
+
+#=============================================================================
+# Target rules for targets named HelpFunc
+
+# Build rule for target.
+HelpFunc: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 HelpFunc
+.PHONY : HelpFunc
+
+# fast build rule for target.
+HelpFunc/fast:
+	$(MAKE) $(MAKESILENT) -f HelpFunc/CMakeFiles/HelpFunc.dir/build.make HelpFunc/CMakeFiles/HelpFunc.dir/build
+.PHONY : HelpFunc/fast
+
 test.o: test.cpp.o
 
 .PHONY : test.o
@@ -177,6 +203,8 @@ help:
 	@echo "... depend"
 	@echo "... edit_cache"
 	@echo "... rebuild_cache"
+	@echo "... CompFunc"
+	@echo "... HelpFunc"
 	@echo "... test"
 	@echo "... test.o"
 	@echo "... test.i"

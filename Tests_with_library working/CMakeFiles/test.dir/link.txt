@@ -1,1 +1,0 @@
-/usr/bin/c++ CMakeFiles/test.dir/test.cpp.o -o test  /usr/local/lib/libseal-3.6.a CompFunc/libCompFunc.a /usr/local/lib/libseal-3.6.a -pthread 
