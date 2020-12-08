@@ -91,6 +91,7 @@ int main(int argc, char *argv[])
 		//	strcpy(cmdout, " > /dev/null 2>&1");
 	}
 
+    //Verify client certificate
     sprintf(directory, "Server");
     sprintf(filename, "c%d-cert.crt", i);
     sprintf(signedfile, "c%d-cert_signed.txt", i);
@@ -99,14 +100,20 @@ int main(int argc, char *argv[])
 
     //Verify signature of message
     sprintf(directory, "Server");
-    sprintf(filename, "msg.txt.enc");
-    sprintf(signedfile, "msg_signed.txt.enc");
+    sprintf(filename, "msg_enc.txt");
+    sprintf(signedfile, "signed_digest.txt");
     sprintf(authority, "c%d-cert.crt",i);
     cout << verifysgn(directory, filename, signedfile, authority) << " - Message Signature Key" << endl;
 
-    sprintf(systemcall,"cd Server && openssl rsautl -decrypt -inkey server_pk.key -in msg.txt.enc -out msg.txt");
-    system(systemcall);
+    // Obtain server Public key and encrypt message
+    sprintf(systemcall, "cd Server && openssl rsautl -decrypt -inkey server_pk.key -in msg_enc.txt -out msg.txt");
+	system(systemcall);
     cout << "Message Decrypted" << endl;
+
+    //Delete encrypted version of the message and signature file
+    sprintf(systemcall, "cd Server && rm msg_enc.txt signed_digest.txt");
+    system(systemcall);
+
 
     ifstream msg;
 
