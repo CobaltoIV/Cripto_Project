@@ -33,7 +33,15 @@ string d2h(int x);
  * @param  n: Number to be converted
  * @retval
  */
-vector<int> d2b(int n);
+vector<int> d2b(int n, int n_bit);
+
+/**
+ * @brief  Takes a hex string and converts it into an decimal string
+ * @note
+ * @param  x:
+ * @retval
+ */
+int h2d(string x);
 
 /**
  * @brief  Encrypts binary vector
@@ -69,7 +77,7 @@ void print_vec(vector<int> x);
  * @param  *directory: Name of directory where we are going to save the numbers
  * @retval None
  */
-void enc_int_total(int x, Encryptor *encryptor, char *directory);
+void enc_int_total(int x, Encryptor *encryptor, char *directory, int n_bit);
 
 /**
  * @brief  
@@ -81,4 +89,22 @@ void enc_int_total(int x, Encryptor *encryptor, char *directory);
  * @param  context: 
  * @retval None
  */
-void dec_int_total(Ciphertext* x_hex, vector<Ciphertext>* bin, Decryptor* decryptor, char* directory, SEALContext context);
+void dec_int_total(Ciphertext* x_hex, vector<Ciphertext>* bin, char* directory, SEALContext context);
+
+/**
+ * @brief  Check if a directory exists
+ * @note   
+ * @param  dirname: 
+ * @retval 
+ */
+bool chkdir(char* dirpath);
+
+/**
+ * @brief  
+ * @note   
+ * @param  tablename: 
+ * @retval None
+ */
+
+bool createdir(char* dirpath);
+

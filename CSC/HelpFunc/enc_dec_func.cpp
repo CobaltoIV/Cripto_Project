@@ -162,15 +162,22 @@ int h2d(string x)
  * @param  n: Number to be converted
  * @retval
  */
-vector<int> d2b(int n)
+vector<int> d2b(int n, int n_bit)
 {
     vector<int> result;
+    if (n >= (int)pow(2,n_bit))
+    {
+        cout << "Number must be smaller than number of bits";
+        exit(1);
+    }
     int digit;
-    while (n > 0)
+    int i = n_bit;
+    while (i > 0)
     {
         digit = n % 2;
         n = n / 2;
         result.insert(result.begin(), digit);
+        i--;
     }
     cout << "Sucessefully converted to bynary" << endl;
     return result;
@@ -183,7 +190,7 @@ vector<int> d2b(int n)
  * @param  *directory: Name of directory where we are going to save the numbers
  * @retval None
  */
-void enc_int_total(int x, Encryptor *encryptor, char *directory)
+void enc_int_total(int x, Encryptor *encryptor, char *directory, int n_bit)
 {
     // Ciphertexts which will store both ypes of encryption
     Ciphertext x_hex_enc;
@@ -191,7 +198,7 @@ void enc_int_total(int x, Encryptor *encryptor, char *directory)
 
     // Preprocessing x to be encrypted through SEAL
     Plaintext x_hex(d2h(x));
-    vector<int> x_bin = d2b(x);
+    vector<int> x_bin = d2b(x,n_bit);
 
     // Encrypting Data
     (*encryptor).encrypt(x_hex, x_hex_enc);

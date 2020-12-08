@@ -14,28 +14,167 @@
 #include <string>
 #include <thread>
 #include <vector>
+#include <dirent.h>
 #include <CompFunc/CompFunc.h>
 #include <HelpFunc/HelpFunc.h>
 #include <seal/seal.h>
+
 using namespace std;
 using namespace seal;
 
+/**
+ * @brief  It takes a column and a encrypted number and compares every entry of the column against it. The comparison saved is defined by the mode
+ * @note   Function is supposed to be called in SELECT ... Where queries
+ * @param  *columndir: Path to column folder
+ * @param  *intdir: Path to number to be compared to
+ * @param  context: 
+ * @param  evaluator: 
+ * @param  relinks: 
+ * @param  mode: Type of comparison: 0 -> a>b || 1-> a=b || 2 -> a<b
+ * @retval None
+ */
+void comparecolumn(char *columndir, char *intdir, SEALContext context, Evaluator* evaluator, RelinKeys relinks, int mode)
+{
+    DIR *folder;
+    stringstream ss;
+    string fullpath, aux, auxdir,auxfile, auxdir_hex;
+    char *dirpath, *resultfile, *resultdir, *enc_dir, *hexdir;
+    char systemcall[500];
+    struct dirent *entry;
+
+    Ciphertext x_hex, i_hex;
+    vector<Ciphertext> x_bin, i_bin, comp_res;
+
+    // Load number that was inserted by user in WHERE
+    dec_int_total(&i_hex, &i_bin, intdir, context);
+
+    // open column directory to iterate through entries
+    folder = opendir(columndir);
+
+    if (folder == NULL)
+    {
+        perror("Unable to read directory");
+        exit(1);
+    }
+    while ((entry = readdir(folder)))
+    {
+        if (!strcmp(entry->d_name, ".") || !strcmp(entry->d_name, "..")) // ignore non important entries
+        {
+            // do nothing (straight logic)
+        }
+        else if (entry->d_type == DT_DIR) // if the entry is a folder(only folder inside directory would be the bin folder)
+        {
+            // open directory
+            cout << entry->d_name << endl;
+            // Get fullpath for number in entry
+            ss << columndir << "/" << entry->d_name;
+            fullpath = ss.str();
+            dirpath = &fullpath[0];
+            // load entry encryptons into x_hex and x_bin variables
+            dec_int_total(&x_hex, &x_bin, dirpath, context);
+            // Compare entry to number inserted by user in where
+            comp_res = full_homomorphic_comparator(x_bin, i_bin, evaluator, relinks);
+            ss.str(string());
+
+            // Save result in folder to be sent to user
+
+            // Get path to .hex of corresponding number
+            ss << columndir << "/" << entry->d_name << "/" << entry->d_name << ".hex";
+            aux = ss.str();
+            enc_dir = &aux[0];
+
+            ss.str(string()); // clean stream for next operation
+            
+            // Get directory in Result folder of corresponding number
+            ss << "Server/Result/" << entry->d_name;
+            auxdir_hex = ss.str();
+            hexdir = &auxdir_hex[0];
+            // Create directory to save number
+            sprintf(systemcall, "mkdir %s", hexdir);
+            system(systemcall);
+             // Copy encrypted number to Result folder in corresponding directory
+            sprintf(systemcall, "cp %s %s", enc_dir, hexdir);
+            system(systemcall); 
+
+            auxdir = "Server/Result";
+            resultdir = &auxdir[0];
+            auxfile = "comp.res";
+            resultfile = &auxfile[0];
+            // Copy result of the comparison to the folder with the respective number
+            save_hom_enc(comp_res[mode], hexdir, resultfile);
+            // clear previous comparison data
+            x_bin.clear();
+            fullpath.clear();
+            ss.str(string());
+        }
+    }
+    closedir(folder);
+}
+
+// TODO  Similar function to compare column but returns only the sum of the entries
 int main(int argc, char *argv[])
 {
 
     char directoryx[50] = "x";
     char directoryy[50] = "y";
+    char directoryz[50] = "z";
     char systemcall[500];
+    system("rm -r Server");
+    system("mkdir Server");
+    system("cd Server && mkdir Database");
+    system("cd Server && mkdir Result");
+    string t;
+    t.append("Server/Database/");
+    t.append("table");
+    char *t_c = &t[0];
+    string c;
+    c.append("Server/Database/table/");
+    c.append("col");
+    char *col = &c[0];
+    if (!createdir(t_c))
+    {
+        cout << "Table " << t_c << " already exists" << endl;
+    }
+    if (!createdir(col))
+    {
+        cout << "Table " << col << " already exists" << endl;
+    }
+
+    SEALContext context = create_context(8192, 128);
+    KeyGenerator keygen(context);
+    PublicKey public_key;
+    keygen.create_public_key(public_key);
+    RelinKeys relin_keys;
+    keygen.create_relin_keys(relin_keys);
+    SecretKey secret_key = keygen.secret_key();
+    Encryptor encryptor(context, public_key);
+    Evaluator evaluator(context);
+    Decryptor decryptor(context, secret_key);
+    int x = 13;
+    int y = 12;
+    int z = 13;
+    int mode = 0;
+
+    int n_bit = 4;
+    int y_res;
+    Plaintext result;
+
+    vector<Ciphertext> x_v_enc, y_v_enc, z_v_enc, output;
+    Ciphertext x_hex, y_hex, z_hex, res;
+
+    enc_int_total(x, &encryptor, directoryx, n_bit);
+
+    enc_int_total(y, &encryptor, directoryy, n_bit);
+
+    enc_int_total(z, &encryptor, directoryz, n_bit);
+
+    system("mv x Server/Database/table/col");
+    system("mv y Server/Database/table/col");
+
+    comparecolumn(col, directoryz, context, &evaluator, relin_keys, mode);
+
     /*
-    EncryptionParameters parms(scheme_type::bfv);
-    //16384
-    size_t poly_modulus_degree = 8192;
-    parms.set_poly_modulus_degree(poly_modulus_degree);
-    parms.set_coeff_modulus(CoeffModulus::BFVDefault(poly_modulus_degree));
-    parms.set_plain_modulus(512);
-    SEALContext context(parms);
-    */
-    SEALContext context = create_context(8192, 512);
+    SEALContext context = create_context(8192, 128);
     KeyGenerator keygen(context);
     PublicKey public_key;
     keygen.create_public_key(public_key);
@@ -50,16 +189,18 @@ int main(int argc, char *argv[])
     system(systemcall);
     sprintf(systemcall,"rm -r %s", directoryy);
     system(systemcall);
-    int x = 20;
-    int y = 18;
+    int x = 13;
+    int y = 12;
+    int n_bit = 4;
+    int y_res;
     Plaintext result;
 
     vector<Ciphertext> x_v_enc, y_v_enc, output;
-    Ciphertext x_hex, y_hex;
+    Ciphertext x_hex, y_hex, res;
 
-    enc_int_total(x, &encryptor, directoryx);
+    enc_int_total(x, &encryptor, directoryx, n_bit);
 
-    enc_int_total(y, &encryptor, directoryy);
+    enc_int_total(y, &encryptor, directoryy, n_bit);
 
     dec_int_total(&x_hex, &x_v_enc,&decryptor, directoryx, context);
 
@@ -74,8 +215,17 @@ int main(int argc, char *argv[])
     cout << "x = "<< result.to_string() << endl;
     cout << "x = ";
     dec_prt_vec(y_v_enc, &decryptor);
+    y_res = h2d(result.to_string());
 
-    output = full_homomorphic_comparator_debug_version(x_v_enc, y_v_enc, &evaluator, relin_keys, &decryptor);
+    //output = full_homomorphic_comparator_debug_version(x_v_enc, y_v_enc, &evaluator, relin_keys, &decryptor);
+
+    //evaluator.multiply(x_hex, output[0], res);
+    //decryptor.decrypt(res, result);
+    //cout << "Result = "<< result.to_string() << endl;
+    cout << "x = ";
+    dec_prt_vec(y_v_enc, &decryptor);
+    y_res = h2d(result.to_string());
+    */
     /*
     d2h(x);
     d2h(y);

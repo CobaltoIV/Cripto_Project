@@ -22,6 +22,7 @@
 
 using namespace std;
 using namespace seal;
+
 /**
  * @brief  Saves homormophic encrypted
  * @note
@@ -50,7 +51,6 @@ Ciphertext load_hom_enc(char *dir, char *filename, SEALContext context)
     fb.open(stringex, fstream::binary | fstream::in);
     x.load(context, fb);
     fb.close();
-    //cout << "Bit sucessfully decrypted";
     return x;
 }
 /**
@@ -140,20 +140,44 @@ string d2h(int x)
 }
 
 /**
+ * @brief  Takes a hex string and converts it into an decimal string
+ * @note
+ * @param  x:
+ * @retval
+ */
+int h2d(string x)
+{
+    stringstream stream;
+    string aux;
+    stream << "0x" << x;
+    stream >> hex >> aux;
+    long int result = strtol(aux.c_str(), NULL, 0);
+    cout << x << " ----> " << to_string(result) << endl;
+    return result;
+}
+
+/**
  * @brief  Converts decimal number into binary
  * @note
  * @param  n: Number to be converted
  * @retval
  */
-vector<int> d2b(int n)
+vector<int> d2b(int n, int n_bit)
 {
     vector<int> result;
+    if (n >= (int)pow(2, n_bit))
+    {
+        cout << "Number must be smaller than number of bits";
+        exit(1);
+    }
     int digit;
-    while (n > 0)
+    int i = n_bit;
+    while (i > 0)
     {
         digit = n % 2;
         n = n / 2;
         result.insert(result.begin(), digit);
+        i--;
     }
     cout << "Sucessefully converted to bynary" << endl;
     return result;
@@ -166,7 +190,7 @@ vector<int> d2b(int n)
  * @param  *directory: Name of directory where we are going to save the numbers
  * @retval None
  */
-void enc_int_total(int x, Encryptor *encryptor, char *directory)
+void enc_int_total(int x, Encryptor *encryptor, char *directory, int n_bit)
 {
     // Ciphertexts which will store both ypes of encryption
     Ciphertext x_hex_enc;
@@ -174,7 +198,7 @@ void enc_int_total(int x, Encryptor *encryptor, char *directory)
 
     // Preprocessing x to be encrypted through SEAL
     Plaintext x_hex(d2h(x));
-    vector<int> x_bin = d2b(x);
+    vector<int> x_bin = d2b(x, n_bit);
 
     // Encrypting Data
     (*encryptor).encrypt(x_hex, x_hex_enc);
@@ -203,6 +227,7 @@ void enc_int_total(int x, Encryptor *encryptor, char *directory)
     }
 }
 
+
 /**
  * @brief  Decrypts number into a Ciphertext (in hexadecimal) and a vector of Ciphertexts(binary)
  * @note   
@@ -213,23 +238,39 @@ void enc_int_total(int x, Encryptor *encryptor, char *directory)
  * @param  context: 
  * @retval None
  */
-void dec_int_total(Ciphertext* x_hex, vector<Ciphertext>* bin, Decryptor* decryptor, char* directory, SEALContext context)
+void dec_int_total(Ciphertext *x_hex, vector<Ciphertext> *bin, char *directory, SEALContext context)
 {
     char systemcall[500];
     char filename[50];
     char bin_dir[50];
     Ciphertext aux;
 
-    sprintf(filename, "%s.hex", directory);
-    (*x_hex) = load_hom_enc(directory, filename, context);
-
-    cout << "hex sucessfully decrypted" << endl;
-
     DIR *folder;
 
     struct dirent *entry;
 
-    sprintf(bin_dir, "./%s/bin", directory);
+    folder = opendir(directory);
+
+    if (folder == NULL)
+    {
+        perror("Unable to read directory");
+        exit(1);
+    }
+
+    while ((entry = readdir(folder)))
+    {
+        if (!strcmp(entry->d_name, ".") || !strcmp(entry->d_name, ".."))
+        {
+            // do nothing (straight logic)
+        }
+        else if (entry->d_type != DT_DIR)
+        {
+            (*x_hex) = load_hom_enc(directory, entry->d_name, context);
+        }
+    }
+    closedir(folder);
+
+    sprintf(bin_dir, "%s/bin", directory);
     folder = opendir(bin_dir);
 
     if (folder == NULL)
@@ -246,11 +287,53 @@ void dec_int_total(Ciphertext* x_hex, vector<Ciphertext>* bin, Decryptor* decryp
         }
         else
         {
-            cout << "File" << entry->d_name << endl;
+            //cout << "File " << entry->d_name << endl;
             aux = load_hom_enc(bin_dir, entry->d_name, context);
             (*bin).push_back(aux);
         }
     }
-
     closedir(folder);
 }
+
+/**
+ * @brief  Check if a directory exists
+ * @note   
+ * @param  tablename: 
+ * @retval 
+ */
+bool chkdir(char *dirpath)
+{
+    DIR *pzDir;
+    bool ret = false;
+
+    pzDir = opendir(dirpath);
+
+    if (pzDir != NULL)
+    {
+        ret = true;
+        (void)closedir(pzDir);
+    }
+
+    return ret;
+}
+/**
+ * @brief  
+ * @note   
+ * @param  *dirpath: 
+ * @retval None
+ */
+bool createdir(char* dirpath)
+{
+    char systemcall[500];
+    if (chkdir(dirpath)) // if directory already exists no need to create
+    {
+        return false;
+    }
+    else // create directory 
+    {
+        sprintf(systemcall, "mkdir %s", dirpath);
+        system(systemcall);
+        return true;
+    }
+}
+

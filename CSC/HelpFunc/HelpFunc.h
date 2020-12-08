@@ -33,7 +33,7 @@ string d2h(int x);
  * @param  n: Number to be converted
  * @retval
  */
-vector<int> d2b(int n);
+vector<int> d2b(int n, int n_bit);
 
 /**
  * @brief  Takes a hex string and converts it into an decimal string
@@ -77,7 +77,7 @@ void print_vec(vector<int> x);
  * @param  *directory: Name of directory where we are going to save the numbers
  * @retval None
  */
-void enc_int_total(int x, Encryptor *encryptor, char *directory);
+void enc_int_total(int x, Encryptor *encryptor, char *directory, int n_bit);
 
 /**
  * @brief  
