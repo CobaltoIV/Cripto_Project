@@ -11,6 +11,8 @@ set(CMAKE_MAKEFILE_DEPENDS
   "CMakeFiles/3.19.1/CMakeCXXCompiler.cmake"
   "CMakeFiles/3.19.1/CMakeSystem.cmake"
   "CMakeLists.txt"
+  "CompFunc/CMakeLists.txt"
+  "HelpFunc/CMakeLists.txt"
   "/usr/local/lib/cmake/SEAL-3.6/SEALConfig.cmake"
   "/usr/local/lib/cmake/SEAL-3.6/SEALConfigVersion.cmake"
   "/usr/local/lib/cmake/SEAL-3.6/SEALTargets-release.cmake"
@@ -53,9 +55,13 @@ set(CMAKE_MAKEFILE_OUTPUTS
 # Byproducts of CMake generate step:
 set(CMAKE_MAKEFILE_PRODUCTS
   "CMakeFiles/CMakeDirectoryInformation.cmake"
+  "CompFunc/CMakeFiles/CMakeDirectoryInformation.cmake"
+  "HelpFunc/CMakeFiles/CMakeDirectoryInformation.cmake"
   )
 
 # Dependency information for all targets:
 set(CMAKE_DEPEND_INFO_FILES
   "CMakeFiles/test.dir/DependInfo.cmake"
+  "CompFunc/CMakeFiles/CompFunc.dir/DependInfo.cmake"
+  "HelpFunc/CMakeFiles/HelpFunc.dir/DependInfo.cmake"
   )

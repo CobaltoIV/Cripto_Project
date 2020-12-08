@@ -1,0 +1,2 @@
+/usr/bin/ar qc libHelpFunc.a CMakeFiles/HelpFunc.dir/enc_dec_func.cpp.o
+/usr/bin/ranlib libHelpFunc.a

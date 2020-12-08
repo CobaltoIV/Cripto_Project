@@ -43,3 +43,93 @@ int main(void)
   return 0;
 }
 
+Performing C SOURCE FILE Test CMAKE_HAVE_LIBC_PTHREAD failed with the following output:
+Change Dir: /mnt/c/Users/ricas/Documents/IST/5ºano/1sem/Cripto/Project/Tests/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make cmTC_27fdf/fast && /usr/bin/make  -f CMakeFiles/cmTC_27fdf.dir/build.make CMakeFiles/cmTC_27fdf.dir/build
+make[1]: Entering directory '/mnt/c/Users/ricas/Documents/IST/5ºano/1sem/Cripto/Project/Tests/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_27fdf.dir/src.c.o
+/usr/bin/cc -DCMAKE_HAVE_LIBC_PTHREAD   -o CMakeFiles/cmTC_27fdf.dir/src.c.o -c /mnt/c/Users/ricas/Documents/IST/5ºano/1sem/Cripto/Project/Tests/CMakeFiles/CMakeTmp/src.c
+Linking C executable cmTC_27fdf
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_27fdf.dir/link.txt --verbose=1
+/usr/bin/cc CMakeFiles/cmTC_27fdf.dir/src.c.o -o cmTC_27fdf 
+CMakeFiles/cmTC_27fdf.dir/src.c.o: In function `main':
+src.c:(.text+0x3e): undefined reference to `pthread_create'
+src.c:(.text+0x4a): undefined reference to `pthread_detach'
+src.c:(.text+0x56): undefined reference to `pthread_cancel'
+src.c:(.text+0x67): undefined reference to `pthread_join'
+src.c:(.text+0x7b): undefined reference to `pthread_atfork'
+collect2: error: ld returned 1 exit status
+CMakeFiles/cmTC_27fdf.dir/build.make:105: recipe for target 'cmTC_27fdf' failed
+make[1]: *** [cmTC_27fdf] Error 1
+make[1]: Leaving directory '/mnt/c/Users/ricas/Documents/IST/5ºano/1sem/Cripto/Project/Tests/CMakeFiles/CMakeTmp'
+Makefile:140: recipe for target 'cmTC_27fdf/fast' failed
+make: *** [cmTC_27fdf/fast] Error 2
+
+
+Source file was:
+#include <pthread.h>
+
+static void* test_func(void* data)
+{
+  return data;
+}
+
+int main(void)
+{
+  pthread_t thread;
+  pthread_create(&thread, NULL, test_func, NULL);
+  pthread_detach(thread);
+  pthread_cancel(thread);
+  pthread_join(thread, NULL);
+  pthread_atfork(NULL, NULL, NULL);
+  pthread_exit(NULL);
+
+  return 0;
+}
+
+Performing C SOURCE FILE Test CMAKE_HAVE_LIBC_PTHREAD failed with the following output:
+Change Dir: /mnt/c/Users/ricas/Documents/IST/5ºano/1sem/Cripto/Project/Tests/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make cmTC_de19b/fast && /usr/bin/make  -f CMakeFiles/cmTC_de19b.dir/build.make CMakeFiles/cmTC_de19b.dir/build
+make[1]: Entering directory '/mnt/c/Users/ricas/Documents/IST/5ºano/1sem/Cripto/Project/Tests/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_de19b.dir/src.c.o
+/usr/bin/cc -DCMAKE_HAVE_LIBC_PTHREAD   -o CMakeFiles/cmTC_de19b.dir/src.c.o -c /mnt/c/Users/ricas/Documents/IST/5ºano/1sem/Cripto/Project/Tests/CMakeFiles/CMakeTmp/src.c
+Linking C executable cmTC_de19b
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_de19b.dir/link.txt --verbose=1
+/usr/bin/cc CMakeFiles/cmTC_de19b.dir/src.c.o -o cmTC_de19b 
+CMakeFiles/cmTC_de19b.dir/src.c.o: In function `main':
+src.c:(.text+0x3e): undefined reference to `pthread_create'
+src.c:(.text+0x4a): undefined reference to `pthread_detach'
+src.c:(.text+0x56): undefined reference to `pthread_cancel'
+src.c:(.text+0x67): undefined reference to `pthread_join'
+src.c:(.text+0x7b): undefined reference to `pthread_atfork'
+collect2: error: ld returned 1 exit status
+CMakeFiles/cmTC_de19b.dir/build.make:105: recipe for target 'cmTC_de19b' failed
+make[1]: *** [cmTC_de19b] Error 1
+make[1]: Leaving directory '/mnt/c/Users/ricas/Documents/IST/5ºano/1sem/Cripto/Project/Tests/CMakeFiles/CMakeTmp'
+Makefile:140: recipe for target 'cmTC_de19b/fast' failed
+make: *** [cmTC_de19b/fast] Error 2
+
+
+Source file was:
+#include <pthread.h>
+
+static void* test_func(void* data)
+{
+  return data;
+}
+
+int main(void)
+{
+  pthread_t thread;
+  pthread_create(&thread, NULL, test_func, NULL);
+  pthread_detach(thread);
+  pthread_cancel(thread);
+  pthread_join(thread, NULL);
+  pthread_atfork(NULL, NULL, NULL);
+  pthread_exit(NULL);
+
+  return 0;
+}
+

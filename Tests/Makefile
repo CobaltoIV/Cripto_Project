@@ -142,6 +142,32 @@ test/fast:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test.dir/build.make CMakeFiles/test.dir/build
 .PHONY : test/fast
 
+#=============================================================================
+# Target rules for targets named CompFunc
+
+# Build rule for target.
+CompFunc: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 CompFunc
+.PHONY : CompFunc
+
+# fast build rule for target.
+CompFunc/fast:
+	$(MAKE) $(MAKESILENT) -f CompFunc/CMakeFiles/CompFunc.dir/build.make CompFunc/CMakeFiles/CompFunc.dir/build
+.PHONY : CompFunc/fast
+
+#=============================================================================
+# Target rules for targets named HelpFunc
+
+# Build rule for target.
+HelpFunc: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 HelpFunc
+.PHONY : HelpFunc
+
+# fast build rule for target.
+HelpFunc/fast:
+	$(MAKE) $(MAKESILENT) -f HelpFunc/CMakeFiles/HelpFunc.dir/build.make HelpFunc/CMakeFiles/HelpFunc.dir/build
+.PHONY : HelpFunc/fast
+
 test.o: test.cpp.o
 
 .PHONY : test.o
@@ -177,6 +203,8 @@ help:
 	@echo "... depend"
 	@echo "... edit_cache"
 	@echo "... rebuild_cache"
+	@echo "... CompFunc"
+	@echo "... HelpFunc"
 	@echo "... test"
 	@echo "... test.o"
 	@echo "... test.i"

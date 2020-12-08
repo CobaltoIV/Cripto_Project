@@ -99,6 +99,10 @@ test_EXTERNAL_OBJECTS =
 test: CMakeFiles/test.dir/test.cpp.o
 test: CMakeFiles/test.dir/build.make
 test: /usr/local/lib/libseal-3.6.a
+test: CompFunc/libCompFunc.a
+test: HelpFunc/libHelpFunc.a
+test: /usr/local/lib/libseal-3.6.a
+test: /usr/local/lib/libseal-3.6.a
 test: CMakeFiles/test.dir/link.txt
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --bold --progress-dir=/mnt/c/Users/ricas/Documents/IST/5ºano/1sem/Cripto/Project/Tests/CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Linking CXX executable test"
 	$(CMAKE_COMMAND) -E cmake_link_script CMakeFiles/test.dir/link.txt --verbose=$(VERBOSE)
