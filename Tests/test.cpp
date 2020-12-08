@@ -33,11 +33,11 @@ using namespace seal;
  * @param  mode: Type of comparison: 0 -> a>b || 1-> a=b || 2 -> a<b
  * @retval None
  */
-void comparecolumn(char *columndir, char *intdir, SEALContext context, Evaluator* evaluator, RelinKeys relinks, int mode)
+void comparecolumn(char *columndir, char *intdir, SEALContext context, Evaluator *evaluator, RelinKeys relinks, int mode)
 {
     DIR *folder;
     stringstream ss;
-    string fullpath, aux, auxdir,auxfile, auxdir_hex;
+    string fullpath, aux, auxdir, auxfile, auxdir_hex;
     char *dirpath, *resultfile, *resultdir, *enc_dir, *hexdir;
     char systemcall[500];
     struct dirent *entry;
@@ -84,7 +84,7 @@ void comparecolumn(char *columndir, char *intdir, SEALContext context, Evaluator
             enc_dir = &aux[0];
 
             ss.str(string()); // clean stream for next operation
-            
+
             // Get directory in Result folder of corresponding number
             ss << "Server/Result/" << entry->d_name;
             auxdir_hex = ss.str();
@@ -92,9 +92,9 @@ void comparecolumn(char *columndir, char *intdir, SEALContext context, Evaluator
             // Create directory to save number
             sprintf(systemcall, "mkdir %s", hexdir);
             system(systemcall);
-             // Copy encrypted number to Result folder in corresponding directory
+            // Copy encrypted number to Result folder in corresponding directory
             sprintf(systemcall, "cp %s %s", enc_dir, hexdir);
-            system(systemcall); 
+            system(systemcall);
 
             auxdir = "Server/Result";
             resultdir = &auxdir[0];
@@ -111,7 +111,81 @@ void comparecolumn(char *columndir, char *intdir, SEALContext context, Evaluator
     closedir(folder);
 }
 
-// TODO  Similar function to compare column but returns only the sum of the entries
+
+/**
+ * @brief  It takes a column and sums every entry.
+ * @note   Function is supposed to be called in SELECT SUM queries without where
+ * @param  *columndir: Path to column folder
+ * @param  *intdir: Path to number to be compared to
+ * @param  context: 
+ * @param  evaluator: 
+ * @param  relinks: 
+ * @retval None
+ */
+void sumcolumn(char *columndir, SEALContext context, Evaluator *evaluator, RelinKeys relinks)
+{
+    DIR *folder;
+    stringstream ss;
+    string fullpath, aux, auxdir, auxfile, auxdir_hex;
+    char *dirpath, *resultfile, *resultdir, *enc_dir, *hexdir, *dir;
+    char systemcall[500];
+    struct dirent *entry;
+
+    Ciphertext x_hex ,sum_total;
+    vector<Ciphertext> x_bin;
+    bool first = true;
+    // open column directory to iterate through entries
+    folder = opendir(columndir);
+
+    if (folder == NULL)
+    {
+        perror("Unable to read directory");
+        exit(1);
+    }
+    while ((entry = readdir(folder)))
+    {
+        if (!strcmp(entry->d_name, ".") || !strcmp(entry->d_name, "..")) // ignore non important entries
+        {
+            // do nothing (straight logic)
+        }
+        else if (entry->d_type == DT_DIR) // if the entry is a folder(only folder inside directory would be the bin folder)
+        {
+            // open directory
+            cout << entry->d_name << endl;
+            // Get fullpath for number in entry
+            ss << columndir << "/" << entry->d_name;
+            fullpath = ss.str();
+            dirpath = &fullpath[0];
+            cout << dirpath<< endl;
+            // load entry encryptons into x_hex and x_bin variables
+            dec_int_total(&x_hex, &x_bin, dirpath, context);
+            if (first)
+            {
+                // for first entry just insert this
+                sum_total = x_hex;
+                first = false;
+            }
+            else
+            {
+                //add the entry to the result
+                (*evaluator).add_inplace(sum_total, x_hex);
+            }
+            //Clear contents of previous
+            x_bin.clear();
+            fullpath.clear();
+            ss.str(string());
+        }
+    }
+    closedir(folder);
+    auxdir = "Server/Result";
+    resultdir = &auxdir[0];
+    auxfile = "sum.res";
+    resultfile = &auxfile[0];
+    // Copy result of the comparison to the folder with the respective number
+    save_hom_enc(sum_total, resultdir, resultfile);
+}
+
+//TODO Function similar to sumcolumn but that it also checks a condition
 int main(int argc, char *argv[])
 {
 
@@ -170,8 +244,16 @@ int main(int argc, char *argv[])
 
     system("mv x Server/Database/table/col");
     system("mv y Server/Database/table/col");
+    system("mv z Server/Database/table/col");
 
-    comparecolumn(col, directoryz, context, &evaluator, relin_keys, mode);
+    sumcolumn(col, context, &evaluator, relin_keys);
+    string d = "Server/Result";
+    char* dir = &d[0];
+    string file = "sum.res";
+    char* filename = &file[0];
+    res = load_hom_enc(dir, filename, context);
+    decryptor.decrypt(res, result);
+    cout << "x+y+z = "<< h2d(result.to_string()) << endl;
 
     /*
     SEALContext context = create_context(8192, 128);
