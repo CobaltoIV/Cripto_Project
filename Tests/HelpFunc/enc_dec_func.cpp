@@ -15,9 +15,8 @@
 #include <cstdlib>
 #include <cstring>
 #include <assert.h>
-#include <stdio.h>
-#include <dirent.h>
 #include <string.h>
+#include <dirent.h>
 #include "seal/seal.h"
 
 using namespace std;
@@ -36,6 +35,7 @@ void save_hom_enc(Ciphertext x, char *dir, char *filename)
     fstream fb;
     char stringex[50] = "";
     sprintf(stringex, "%s/%s", dir, filename);
+    //cout << stringex << endl;
     fb.open(stringex, fstream::binary | fstream::out);
     x.save(fb);
     fb.close();
@@ -182,6 +182,7 @@ vector<int> d2b(int n, int n_bit)
     cout << "Sucessefully converted to bynary" << endl;
     return result;
 }
+
 /**
  * @brief  Takes an int and encrypts it in two ways, as a hexadecimal string and as a binary number. It also saves them into files
  * @note
@@ -227,17 +228,307 @@ void enc_int_total(int x, Encryptor *encryptor, char *directory, int n_bit)
     }
 }
 
-
 /**
- * @brief  Decrypts number into a Ciphertext (in hexadecimal) and a vector of Ciphertexts(binary)
- * @note   
- * @param  *hex: 
- * @param  *bin: 
- * @param  *decryptor: 
- * @param  *directory: 
- * @param  context: 
+ * @brief  Check if a directory exists
+ * @note
+ * @param  tablename:
+ * @retval
+ */
+bool chkdir(char *dirpath)
+{
+    DIR *pzDir;
+    bool ret = false;
+
+    pzDir = opendir(dirpath);
+
+    if (pzDir != NULL)
+    {
+        ret = true;
+        (void)closedir(pzDir);
+    }
+
+    return ret;
+}
+/**
+ * @brief
+ * @note
+ * @param  *dirpath:
  * @retval None
  */
+bool createdir(char *dirpath)
+{
+    char systemcall[500];
+    if (chkdir(dirpath)) // if directory already exists no need to create
+    {
+        return false;
+    }
+    else // create directory
+    {
+        sprintf(systemcall, "mkdir %s", dirpath);
+        system(systemcall);
+        return true;
+    }
+}
+string getlinenumber(char *columndir)
+{
+    DIR *folder;
+    string last_line;
+    char *dirpath, *resultfile, *resultdir, *enc_dir, *hexdir;
+    char systemcall[500];
+    struct dirent *entry;
+    int i = 0;
+
+    folder = opendir(columndir);
+
+    if (folder == NULL)
+    {
+        perror("Unable to read directory");
+        exit(1);
+    }
+    while ((entry = readdir(folder)))
+    {
+
+        if (!strcmp(entry->d_name, ".") || !strcmp(entry->d_name, "..")) // ignore non important entries
+        {
+            // do nothing (straight logic)
+        }
+        else if (entry->d_type == DT_DIR) // if the entry is a folder(only folder inside directory would be the bin folder)
+        {
+            // open directory
+            cout << entry->d_name << endl;
+            i++;
+            last_line = entry->d_name;
+        }
+    }
+    if (i == 0) // table is empty
+    {
+        string ret = "1";
+        return ret;
+    }
+    else
+    {
+        stringstream ss(last_line);
+        int temp;
+        ss >> temp;
+        temp++;
+        return to_string(temp);
+    }
+    closedir(folder);
+}
+
+void create_exec(string query, size_t pos)
+{
+    string col, c, token;
+    string delimiter = " ";
+    // get tablename
+    pos = query.find(delimiter);
+    token = query.substr(0, pos);
+    query.erase(0, pos + delimiter.length());
+    string p = "Server/Database/";
+    p.append(token);
+    char *dir = &p[0];
+    if (!createdir(dir))
+    {
+        exit(1);
+    }
+    //find rest of the collumns
+    while ((pos = query.find(delimiter)) != query.npos)
+    {
+        stringstream ss;
+        char *coldir;
+        //Get a column name from the input string
+        col = query.substr(0, pos);
+        //cout << col << endl;
+        //Remove the current column name from the input string
+        query.erase(0, pos + delimiter.length());
+        ss << p << "/" << col;
+        c = ss.str();
+        coldir = &c[0];
+        createdir(coldir);
+        ss.str(string());
+    }
+
+    ofstream fb;
+    fb.open("Server/Result/res.txt");
+    fb << "CREATE Sucessfull";
+    fb.close();
+}
+
+void insert_exec(string query, size_t pos, string queriespath)
+{
+    string allcolls, c, col, table, value, v, valuename;
+    vector<string> cols;
+    vector<string> values;
+    string delimiter = " ";
+    string coldelimiter = "VALUES ";
+    stringstream ss;
+    char systemcall[500];
+    char *coldir, *valuedir, *linedir, *valuehex;
+
+    // get tablename
+    pos = query.find(delimiter);
+    table = query.substr(0, pos);
+    query.erase(0, pos + delimiter.length());
+    string p = "Server/Database/";
+    p.append(table);
+    char *tabledir = &p[0];
+    if (!chkdir(tabledir))
+    {
+        cout << "Table doesn't exist";
+        exit(1);
+    }
+
+    pos = query.find(coldelimiter);
+    allcolls = query.substr(0, pos);
+    query.erase(0, pos + coldelimiter.length());
+
+    //cout << allcolls << endl;
+    //cout << query << endl;
+    //get the values into a vector
+    while ((pos = query.find(delimiter)) != query.npos)
+    {
+        //Get a value name from the input string
+        value = query.substr(0, pos);
+        //Remove the current value name from the input string
+        query.erase(0, pos + delimiter.length());
+        ss << queriespath << "/" << value;
+        v = ss.str();
+        values.push_back(v);
+        ss.str(string());
+    }
+    // get the collumns into a vector
+    while ((pos = allcolls.find(delimiter)) != allcolls.npos)
+    {
+        //Get a column name from the input string
+        col = allcolls.substr(0, pos);
+        //cout << value << endl;
+        //Remove the current column name from the input string
+        allcolls.erase(0, pos + delimiter.length());
+        ss << "Server/Database/" << table << "/" << col;
+        c = ss.str();
+        //cout << c << endl;
+        cols.push_back(c);
+        ss.str(string());
+    }
+    // Doesn't matter which collumn they all have the same number of lines
+    col = cols[0];
+    coldir = &col[0];
+    string line_number = getlinenumber(coldir);
+    linedir = &line_number[0];
+    for (int i = 0; i < cols.size(); i++) // move numbers to respective collumns with the rigth line number
+    {
+        // Get directories for collumns and values
+        col = cols[i];
+        coldir = &col[0];
+        value = values[i];
+        valuedir = &value[0];
+        // create directory to copy value to collumn using the number of line
+        sprintf(systemcall, "mkdir %s/%s", coldir, linedir);
+        system(systemcall);
+
+        //std::cout << "Splitting: " << value << endl;
+        unsigned found = value.find_last_of("/\\");
+        //std::cout << " path: " << value.substr(0, found) << endl;
+        //std::cout << " file: " << value.substr(found + 1) << endl;
+        // get name of the .hex encryption so we can alter it to the number of the line
+        valuename = value.substr(found + 1);
+        valuehex = &valuename[0];
+
+        // change name of .hex
+        sprintf(systemcall, "mv %s/%s.hex %s/%s.hex", valuedir, valuehex, valuedir, linedir);
+        system(systemcall);
+
+        // copy number
+        sprintf(systemcall, "cp -r %s/* %s/%s", valuedir, coldir, linedir);
+        system(systemcall);
+    }
+    // Send Sucess message
+    ofstream fb;
+    fb.open("Server/Result/res.txt");
+    fb << "INSERT Sucessfull";
+    fb.close();
+}
+
+void select_exec(string query, size_t pos)
+{
+    string allcolls, c, col, table, value, v, valuename;
+    vector<string> cols;
+    string delimiter = " ";
+    string coldelimiter = "FROM ";
+    stringstream ss;
+    char systemcall[500];
+    char *coldir, *tablename, *linedir, *valuehex;
+
+    // get all collumns
+    pos = query.find(coldelimiter);
+    allcolls = query.substr(0, pos);
+    query.erase(0, pos + coldelimiter.length());
+
+    // get table name
+    pos = query.find(delimiter);
+    table = query.substr(0, pos);
+    query.erase(0, pos + delimiter.length());
+    tablename = &table[0];
+
+    sprintf(systemcall, "mkdir Server/Result/%s", tablename);
+    system(systemcall);
+    // check table exists
+    string p = "Server/Database/";
+    p.append(table);
+    char *tabledir = &p[0];
+    if (!chkdir(tabledir))
+    {
+        cout << "Table doesn't exist";
+        exit(1);
+    }
+
+    while ((pos = allcolls.find(delimiter)) != allcolls.npos)
+    {
+        //Get a column name from the input string
+        col = allcolls.substr(0, pos);
+        //Remove the current column name from the input string
+        allcolls.erase(0, pos + delimiter.length());
+        // Get directory of collum
+        ss << p << "/" << col;
+        c = ss.str();
+        char *coldir = &c[0];
+        if (!chkdir(coldir))
+        {
+            cout << "Collumn doesn't exist";
+            exit(1);
+        }
+
+        sprintf(systemcall, "cp -r %s Server/Result/%s ",coldir, tablename);
+        system(systemcall);
+
+        ss.str(string());
+
+    }
+}
+void query_exec(string query, string queriespath)
+{
+    string delimiter = " ";
+    string token;
+    size_t pos = query.find(delimiter);
+    token = query.substr(0, pos);
+    query.erase(0, pos + delimiter.length());
+
+    //cout << query << endl;
+
+    if (token.compare("CREATE") == 0)
+    {
+        create_exec(query, pos);
+    }
+    else if (token.compare("INSERT") == 0)
+    {
+        insert_exec(query, pos, queriespath);
+    }
+    else if (token.compare("SELECT") == 0)
+    {
+        select_exec(query, pos);
+    }
+}
+
 void dec_int_total(Ciphertext *x_hex, vector<Ciphertext> *bin, char *directory, SEALContext context)
 {
     char systemcall[500];
@@ -294,46 +585,3 @@ void dec_int_total(Ciphertext *x_hex, vector<Ciphertext> *bin, char *directory, 
     }
     closedir(folder);
 }
-
-/**
- * @brief  Check if a directory exists
- * @note   
- * @param  tablename: 
- * @retval 
- */
-bool chkdir(char *dirpath)
-{
-    DIR *pzDir;
-    bool ret = false;
-
-    pzDir = opendir(dirpath);
-
-    if (pzDir != NULL)
-    {
-        ret = true;
-        (void)closedir(pzDir);
-    }
-
-    return ret;
-}
-/**
- * @brief  
- * @note   
- * @param  *dirpath: 
- * @retval None
- */
-bool createdir(char* dirpath)
-{
-    char systemcall[500];
-    if (chkdir(dirpath)) // if directory already exists no need to create
-    {
-        return false;
-    }
-    else // create directory 
-    {
-        sprintf(systemcall, "mkdir %s", dirpath);
-        system(systemcall);
-        return true;
-    }
-}
-

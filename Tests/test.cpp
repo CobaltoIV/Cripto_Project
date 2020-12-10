@@ -27,9 +27,9 @@ using namespace seal;
  * @note   Function is supposed to be called in SELECT ... Where queries
  * @param  *columndir: Path to column folder
  * @param  *intdir: Path to number to be compared to
- * @param  context: 
- * @param  evaluator: 
- * @param  relinks: 
+ * @param  context:
+ * @param  evaluator:
+ * @param  relinks:
  * @param  mode: Type of comparison: 0 -> a>b || 1-> a=b || 2 -> a<b
  * @retval None
  */
@@ -41,13 +41,31 @@ void comparecolumn(char *columndir, char *intdir, SEALContext context, Evaluator
     char *dirpath, *resultfile, *resultdir, *enc_dir, *hexdir;
     char systemcall[500];
     struct dirent *entry;
-
     Ciphertext x_hex, i_hex;
     vector<Ciphertext> x_bin, i_bin, comp_res;
+    string coldir = columndir;
 
+    // Create directory in Result with name of collumn
+    // Get name of column
+    std::cout << "Splitting: " << coldir << endl;
+    unsigned found = coldir.find_last_of("/\\");
+    std::cout << " path: " << coldir.substr(0, found) << endl;
+    std::cout << " file: " << coldir.substr(found + 1) << endl;
+    string colname = coldir.substr(found + 1);
+
+    // Get directory path
+    ss << "Server/Result/" << colname;
+    string rescol = ss.str();
+    cout << rescol << endl;
+    char *rescoldir = &rescol[0];
+    // Create directory
+    cout << rescoldir << endl;
+    createdir(rescoldir);
+    ss.str(string());
     // Load number that was inserted by user in WHERE
     dec_int_total(&i_hex, &i_bin, intdir, context);
 
+    //createdir()
     // open column directory to iterate through entries
     folder = opendir(columndir);
 
@@ -86,7 +104,7 @@ void comparecolumn(char *columndir, char *intdir, SEALContext context, Evaluator
             ss.str(string()); // clean stream for next operation
 
             // Get directory in Result folder of corresponding number
-            ss << "Server/Result/" << entry->d_name;
+            ss << rescol << "/" << entry->d_name;
             auxdir_hex = ss.str();
             hexdir = &auxdir_hex[0];
             // Create directory to save number
@@ -98,7 +116,9 @@ void comparecolumn(char *columndir, char *intdir, SEALContext context, Evaluator
 
             auxdir = "Server/Result";
             resultdir = &auxdir[0];
-            auxfile = "comp.res";
+            ss.str(string());
+            ss << entry->d_name << ".res";
+            auxfile = ss.str();
             resultfile = &auxfile[0];
             // Copy result of the comparison to the folder with the respective number
             save_hom_enc(comp_res[mode], hexdir, resultfile);
@@ -110,7 +130,6 @@ void comparecolumn(char *columndir, char *intdir, SEALContext context, Evaluator
     }
     closedir(folder);
 }
-
 
 /**
  * @brief  It takes a column and sums every entry.
@@ -131,7 +150,7 @@ void sumcolumn(char *columndir, SEALContext context, Evaluator *evaluator, Relin
     char systemcall[500];
     struct dirent *entry;
 
-    Ciphertext x_hex ,sum_total;
+    Ciphertext x_hex, sum_total;
     vector<Ciphertext> x_bin;
     bool first = true;
     // open column directory to iterate through entries
@@ -156,7 +175,7 @@ void sumcolumn(char *columndir, SEALContext context, Evaluator *evaluator, Relin
             ss << columndir << "/" << entry->d_name;
             fullpath = ss.str();
             dirpath = &fullpath[0];
-            cout << dirpath<< endl;
+            cout << dirpath << endl;
             // load entry encryptons into x_hex and x_bin variables
             dec_int_total(&x_hex, &x_bin, dirpath, context);
             if (first)
@@ -188,15 +207,116 @@ void sumcolumn(char *columndir, SEALContext context, Evaluator *evaluator, Relin
 //TODO Function similar to sumcolumn but that it also checks a condition
 int main(int argc, char *argv[])
 {
-
     char directoryx[50] = "x";
     char directoryy[50] = "y";
     char directoryz[50] = "z";
+    char directoryk[50] = "k";
+    const char *filepath = "Server/Queries/Client1Query/msg.txt";
+    string qpath = "Server/Queries/Client1Query";
+    int i = 1;
+    int x = 10;
+    int y = 5;
+    int z = 14;
+    int k = 8;
+    int n_bit = 4;
     char systemcall[500];
+    size_t pos;
+    Ciphertext x_hex, y_hex, z_hex, res, x_r,y_r;
+    Plaintext result;
     system("rm -r Server");
     system("mkdir Server");
     system("cd Server && mkdir Database");
     system("cd Server && mkdir Result");
+    system("cd Server && mkdir Queries");
+    system("cd Server/Queries && mkdir Client1Query");
+
+    SEALContext context = create_context(8192, 128);
+    KeyGenerator keygen(context);
+    PublicKey public_key;
+    keygen.create_public_key(public_key);
+    RelinKeys relin_keys;
+    keygen.create_relin_keys(relin_keys);
+    SecretKey secret_key = keygen.secret_key();
+    Encryptor encryptor(context, public_key);
+    Evaluator evaluator(context);
+    Decryptor decryptor(context, secret_key);
+
+    enc_int_total(x, &encryptor, directoryx, n_bit);
+
+    enc_int_total(y, &encryptor, directoryy, n_bit);
+
+    enc_int_total(z, &encryptor, directoryz, n_bit);
+
+    enc_int_total(k, &encryptor, directoryk, n_bit);
+
+    system("mv x Server/Queries/Client1Query");
+    system("mv y Server/Queries/Client1Query");
+    system("mv z Server/Queries/Client1Query");
+    system("mv k Server/Queries/Client1Query");
+
+    string sql = "CREATE table col1 col2 ";
+    fstream fb;
+    fb.open(filepath, fstream::out);
+    fb << sql;
+    fb.close();
+
+    string query;
+    fb.open(filepath, fstream::in);
+    while (fb)
+    {
+        getline(fb, query);
+        cout << query << endl;
+    }
+    fb.close();
+
+    query_exec(query, qpath);
+
+    sql = "INSERT table col1 col2 VALUES x y ";
+    fb.open(filepath, fstream::out);
+    fb << sql;
+    fb.close();
+
+    fb.open(filepath, fstream::in);
+    while (fb)
+    {
+        getline(fb, query);
+        cout << query << endl;
+    }
+    fb.close();
+
+    query_exec(query, qpath);
+
+    sql = "INSERT table col1 col2 VALUES z k ";
+    fb.open(filepath, fstream::out);
+    fb << sql;
+    fb.close();
+
+    fb.open(filepath, fstream::in);
+    while (fb)
+    {
+        getline(fb, query);
+        cout << query << endl;
+    }
+    fb.close();
+
+    query_exec(query, qpath);
+
+    sql = "SELECT col1 col2 FROM table ";
+    fb.open(filepath, fstream::out);
+    fb << sql;
+    fb.close();
+
+    fb.open(filepath, fstream::in);
+    while (fb)
+    {
+        getline(fb, query);
+        cout << query << endl;
+    }
+    fb.close();
+
+    query_exec(query, qpath);
+
+    /*
     string t;
     t.append("Server/Database/");
     t.append("table");
@@ -227,6 +347,8 @@ int main(int argc, char *argv[])
     int x = 13;
     int y = 12;
     int z = 13;
+    int i = 7;
+    int k = 3
     int mode = 0;
 
     int n_bit = 4;
@@ -234,7 +356,7 @@ int main(int argc, char *argv[])
     Plaintext result;
 
     vector<Ciphertext> x_v_enc, y_v_enc, z_v_enc, output;
-    Ciphertext x_hex, y_hex, z_hex, res;
+    Ciphertext x_hex, y_hex, z_hex, res, x_r,y_r;
 
     enc_int_total(x, &encryptor, directoryx, n_bit);
 
@@ -244,8 +366,12 @@ int main(int argc, char *argv[])
 
     system("mv x Server/Database/table/col");
     system("mv y Server/Database/table/col");
-    system("mv z Server/Database/table/col");
+    //system("mv z Server/Database/table/col");
 
+    comparecolumn(col, directoryz, context, &evaluator ,relin_keys, mode);
+    */
+
+    /*
     sumcolumn(col, context, &evaluator, relin_keys);
     string d = "Server/Result";
     char* dir = &d[0];
@@ -254,8 +380,39 @@ int main(int argc, char *argv[])
     res = load_hom_enc(dir, filename, context);
     decryptor.decrypt(res, result);
     cout << "x+y+z = "<< h2d(result.to_string()) << endl;
+    */
 
-    /*
+    /*    
+    Ciphertext x_encrypted, y_encrypted;
+    Plaintext x_plain(to_string(x)), y_plain(to_string(y));
+
+    encryptor.encrypt(x_plain, x_encrypted);
+    encryptor.encrypt(y_plain, y_encrypted);
+    cout << "encrypted" << endl;
+    string x_dir = ".";
+    char* dir  = &x_dir[0];
+    string filename = "lol.enc";
+    char* file = &filename[0];
+    save_hom_enc(x_encrypted, dir , file);
+    save_hom_enc(y_encrypted, dir , file);
+    cout << "saved" << endl;
+    cout << "saved" << endl;
+    char stringex[50] = "";
+    sprintf(stringex, "%s/%s", dir, file);
+    cout << stringex << endl;
+    fstream fb;
+    cout << stringex << endl;
+    fb.open(file, fstream::binary | fstream::in);
+    cout << stringex << endl;
+    x_r.load(context, fb);
+    decryptor.decrypt(x_r, result);
+    cout << "x = "<< result.to_string() << endl;
+    y_r.load(context, fb);
+    decryptor.decrypt(y_r, result);
+    cout << "y = "<< result.to_string() << endl;
+    fb.close();
+
+
     SEALContext context = create_context(8192, 128);
     KeyGenerator keygen(context);
     PublicKey public_key;

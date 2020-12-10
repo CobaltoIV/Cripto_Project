@@ -1,3 +1,27 @@
+#include <cstddef>
+#include <iostream>
+#include <fstream>
+#include <iomanip>
+#include <vector>
+#include <string>
+#include <chrono>
+#include <random>
+#include <thread>
+#include <mutex>
+#include <memory>
+#include <limits>
+#include <algorithm>
+#include <numeric>
+#include <cstdlib>
+#include <cstring>
+#include <assert.h>
+#include <stdio.h>
+#include <dirent.h>
+#include "seal/seal.h"
+
+using namespace std;
+using namespace seal;
+
 /**
  * @brief  
  * @note   
@@ -82,10 +106,9 @@ void enc_int_total(int x, Encryptor *encryptor, char *directory, int n_bit);
 /**
  * @brief  
  * @note   
- * @param  *hex: 
+ * @param  x_hex: 
  * @param  bin: 
- * @param  *decryptor: 
- * @param  *directory: 
+ * @param  directory: 
  * @param  context: 
  * @retval None
  */
@@ -108,3 +131,12 @@ bool chkdir(char* dirpath);
 
 bool createdir(char* dirpath);
 
+string getlinenumber(char *columndir);
+
+void create_exec(string query, size_t pos);
+
+void query_exec(string query, string queriespath);
+
+void insert_exec(string query, size_t pos, string queriespath);
+
+void select_exec(string query, size_t pos);
