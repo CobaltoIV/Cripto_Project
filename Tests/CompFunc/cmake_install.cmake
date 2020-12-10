@@ -1,4 +1,4 @@
-# Install script for directory: /mnt/c/Users/ricas/Documents/IST/5ºano/1sem/Cripto/Project/Tests/CompFunc
+# Install script for directory: /mnt/c/Users/ricas/Documents/IST/5ºano/1sem/Cripto/Project/Git/Cripto_Project/Tests/CompFunc
 
 # Set the install prefix
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)

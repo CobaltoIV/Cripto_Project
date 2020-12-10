@@ -21,6 +21,288 @@
 
 using namespace std;
 using namespace seal;
+/**
+ * @brief  It takes a column and sums every entry.
+ * @note   Function is supposed to be called in SELECT SUM queries without where
+ * @param  *columndir: Path to column folder
+ * @param  *intdir: Path to number to be compared to
+ * @param  context:
+ * @param  evaluator:
+ * @param  relinks:
+ * @retval None
+ */
+void sumcolumn(char *columndir, SEALContext context, Evaluator *evaluator, RelinKeys relinks)
+{
+    DIR *folder;
+    stringstream ss;
+    string fullpath, aux, auxdir, auxfile, auxdir_hex;
+    char *dirpath, *resultfile, *resultdir, *enc_dir, *hexdir, *dir;
+    char systemcall[500];
+    struct dirent *entry;
+
+    Ciphertext x_hex, sum_total;
+    vector<Ciphertext> x_bin;
+    bool first = true;
+    // open column directory to iterate through entries
+    folder = opendir(columndir);
+
+    if (folder == NULL)
+    {
+        perror("Unable to read directory");
+        exit(1);
+    }
+    while ((entry = readdir(folder)))
+    {
+        if (!strcmp(entry->d_name, ".") || !strcmp(entry->d_name, "..")) // ignore non important entries
+        {
+            // do nothing (straight logic)
+        }
+        else if (entry->d_type == DT_DIR) // if the entry is a folder(only folder inside directory would be the bin folder)
+        {
+            // open directory
+            cout << entry->d_name << endl;
+            // Get fullpath for number in entry
+            ss << columndir << "/" << entry->d_name;
+            fullpath = ss.str();
+            dirpath = &fullpath[0];
+            cout << dirpath << endl;
+            // load entry encryptons into x_hex and x_bin variables
+            dec_int_total(&x_hex, &x_bin, dirpath, context);
+            if (first)
+            {
+                // for first entry just insert this
+                sum_total = x_hex;
+                first = false;
+            }
+            else
+            {
+                //add the entry to the result
+                (*evaluator).add_inplace(sum_total, x_hex);
+            }
+            //Clear contents of previous
+            x_bin.clear();
+            fullpath.clear();
+            ss.str(string());
+        }
+    }
+    closedir(folder);
+    auxdir = "Server/Result";
+    resultdir = &auxdir[0];
+    auxfile = "sum.res";
+    resultfile = &auxfile[0];
+    // Copy result of the comparison to the folder with the respective number
+    save_hom_enc(sum_total, resultdir, resultfile);
+}
+
+void sumcolumn_where(char *columndir, vector<string> cond_cols, vector<int> modes, vector<string> cond_nums, SEALContext context, Evaluator *evaluator, RelinKeys relinks)
+{
+    DIR *folder;
+    stringstream ss;
+    string fullpath, aux, auxdir, auxfile, auxdir_hex, col, col_line, num;
+    char *dirpath, *resultfile, *resultdir, *enc_dir, *hexdir, *dir, *col_line_dir, *numdir;
+    char systemcall[500];
+    struct dirent *entry;
+
+    Ciphertext x_hex, num_hex, col_hex, comp, sum_total, add;
+    vector<Ciphertext> x_bin, num_bin, col_bin, output;
+    bool first = true;
+
+    // open column directory to iterate through entries
+    folder = opendir(columndir);
+
+    if (folder == NULL)
+    {
+        perror("Unable to read directory");
+        exit(1);
+    }
+    while ((entry = readdir(folder)))
+    {
+        if (!strcmp(entry->d_name, ".") || !strcmp(entry->d_name, "..")) // ignore non important entries
+        {
+            // do nothing (straight logic)
+        }
+        else if (entry->d_type == DT_DIR) // if the entry is a folder(corresponds to a line)
+        {
+            // check conditions for this line using entry
+            for (int i = 0; i < cond_cols.size(); i++)
+            {
+                col = cond_cols[i];
+                ss << col << "/" << entry->d_name;
+                col_line = ss.str();
+
+                cout << col_line << endl;
+
+                col_line_dir = &col_line[0];
+                num = cond_nums[i];
+                numdir = &num[0];
+                // load numbers
+                dec_int_total(&num_hex, &num_bin, numdir, context);
+                dec_int_total(&col_hex, &col_bin, col_line_dir, context);
+                //compare
+                output = full_homomorphic_comparator(col_bin, num_bin, evaluator, relinks);
+
+                if (i == 0)
+                    comp = output[modes[i]];
+                else
+                {
+                    (*evaluator).multiply_inplace(comp, output[modes[i]]);
+                    (*evaluator).relinearize_inplace(comp, relinks);
+                }
+                num_bin.clear();
+                col_bin.clear();
+                ss.str(string());
+            }
+
+            cout << entry->d_name << endl;
+
+            // Get fullpath for number in entry
+            ss << columndir << "/" << entry->d_name;
+            fullpath = ss.str();
+            dirpath = &fullpath[0];
+            cout << dirpath << endl;
+
+            // load entry encryptons into x_hex and x_bin variables
+            dec_int_total(&x_hex, &x_bin, dirpath, context);
+            if (first)
+            {
+
+                // for first entry just insert this
+                (*evaluator).multiply(comp, x_hex, add);
+                (*evaluator).relinearize_inplace(add, relinks);
+                sum_total = add;
+                first = false;
+            }
+            else
+            {
+                //add the entry to the result
+                (*evaluator).multiply(comp, x_hex, add);
+                (*evaluator).relinearize_inplace(add, relinks);
+                (*evaluator).add_inplace(sum_total, add);
+            }
+            //Clear contents of previous
+            x_bin.clear();
+            fullpath.clear();
+            ss.str(string());
+        }
+    }
+    closedir(folder);
+    auxdir = "Server/Result";
+    resultdir = &auxdir[0];
+    auxfile = "sum.res";
+    resultfile = &auxfile[0];
+    // Copy result of the comparison to the folder with the respective number
+    save_hom_enc(sum_total, resultdir, resultfile);
+}
+
+void sumcolumn_where_debug(char *columndir, vector<string> cond_cols, vector<int> modes, vector<string> cond_nums, SEALContext context, Evaluator *evaluator, RelinKeys relinks, Decryptor *decryptor)
+{
+    DIR *folder;
+    stringstream ss;
+    string fullpath, aux, auxdir, auxfile, auxdir_hex, col, col_line, num;
+    char *dirpath, *resultfile, *resultdir, *enc_dir, *hexdir, *dir, *col_line_dir, *numdir;
+    char systemcall[500];
+    struct dirent *entry;
+
+    Ciphertext x_hex, num_hex, col_hex, comp, sum_total, add;
+    vector<Ciphertext> x_bin, num_bin, col_bin, output;
+    Plaintext res1, res2, res3;
+    bool first = true;
+
+    // open column directory to iterate through entries
+    folder = opendir(columndir);
+
+    if (folder == NULL)
+    {
+        perror("Unable to read directory");
+        exit(1);
+    }
+    while ((entry = readdir(folder)))
+    {
+        if (!strcmp(entry->d_name, ".") || !strcmp(entry->d_name, "..")) // ignore non important entries
+        {
+            // do nothing (straight logic)
+        }
+        else if (entry->d_type == DT_DIR) // if the entry is a folder(corresponds to a line)
+        {
+            // check conditions for this line using entry
+            for (int i = 0; i < cond_cols.size(); i++)
+            {
+                col = cond_cols[i];
+                ss << col << "/" << entry->d_name;
+                col_line = ss.str();
+
+                cout << col_line << endl;
+
+                col_line_dir = &col_line[0];
+                num = cond_nums[i];
+                numdir = &num[0];
+                // load numbers
+                dec_int_total(&num_hex, &num_bin, numdir, context);
+                dec_int_total(&col_hex, &col_bin, col_line_dir, context);
+                (*decryptor).decrypt(col_hex, res2);
+                (*decryptor).decrypt(num_hex, res3);
+                cout << "    + noise budget in encrypted_result: " << (*decryptor).invariant_noise_budget(col_hex) << " bits" << endl;
+                cout << "    + noise budget in encrypted_result: " << (*decryptor).invariant_noise_budget(num_hex) << " bits" << endl;
+                //compare
+                output = full_homomorphic_comparator(col_bin, num_bin, evaluator, relinks);
+
+                if (i == 0)
+                {
+                    comp = output[modes[i]];
+                    (*decryptor).decrypt(comp, res1);
+                    cout << "    + noise budget in encrypted_result: " << (*decryptor).invariant_noise_budget(comp) << " bits" << endl;
+                    cout << res2.to_string() << ">" << res3.to_string() << "=" << res1.to_string() << endl;
+                }
+                else
+                {
+                    (*evaluator).multiply_inplace(comp, output[modes[i]]);
+                    (*evaluator).relinearize_inplace(comp, relinks);
+                }
+                num_bin.clear();
+                col_bin.clear();
+                ss.str(string());
+            }
+
+            cout << entry->d_name << endl;
+
+            // Get fullpath for number in entry
+            ss << columndir << "/" << entry->d_name;
+            fullpath = ss.str();
+            dirpath = &fullpath[0];
+            cout << dirpath << endl;
+
+            // load entry encryptons into x_hex and x_bin variables
+            dec_int_total(&x_hex, &x_bin, dirpath, context);
+            if (first)
+            {
+
+                // for first entry just insert this
+                (*evaluator).multiply(comp, x_hex, add);
+                (*evaluator).relinearize_inplace(add, relinks);
+                sum_total = add;
+                first = false;
+            }
+            else
+            {
+                //add the entry to the result
+                (*evaluator).multiply(comp, x_hex, add);
+                (*evaluator).relinearize_inplace(add, relinks);
+                (*evaluator).add_inplace(sum_total, add);
+            }
+            //Clear contents of previous
+            x_bin.clear();
+            fullpath.clear();
+            ss.str(string());
+        }
+    }
+    closedir(folder);
+    auxdir = "Server/Result";
+    resultdir = &auxdir[0];
+    auxfile = "sum.res";
+    resultfile = &auxfile[0];
+    // Copy result of the comparison to the folder with the respective number
+    save_hom_enc(sum_total, resultdir, resultfile);
+}
 
 void create_exec(string query, size_t pos)
 {
@@ -211,15 +493,255 @@ void select_exec(string query, size_t pos)
     }
 }
 
-void select_exec_where(string query, size_t pos)
+void sum_exec(string query, size_t pos, SEALContext context, Evaluator *evaluator, RelinKeys relinks)
 {
+    string c, col, table, temp;
+    string delimiter = " ";
+    string coldelimiter = " FROM ";
+    stringstream ss;
+    char systemcall[500];
+    char *coldir, *tablename;
+
+    // get the SUM token out
+    pos = query.find(delimiter);
+    temp = query.substr(0, pos);
+    cout << temp << endl;
+    query.erase(0, pos + delimiter.length());
+    // get the collumn to be summed
+    pos = query.find(coldelimiter);
+    col = query.substr(0, pos);
+    query.erase(0, pos + coldelimiter.length());
+
+    // get table name
+    pos = query.find(delimiter);
+    table = query.substr(0, pos);
+    query.erase(0, pos + delimiter.length());
+    tablename = &table[0];
+
+    // check table exists
+    string p = "Server/Database/";
+    p.append(table);
+    char *tabledir = &p[0];
+    if (!chkdir(tabledir))
+    {
+        cout << "Table doesn't exist";
+        exit(1);
+    }
+
+    // Get directory of collum
+    ss << p << "/" << col;
+    c = ss.str();
+    cout << c << endl;
+    coldir = &c[0];
+    if (!chkdir(coldir))
+    {
+        cout << "Collumn doesn't exist";
+        exit(1);
+    }
+    sumcolumn(coldir, context, evaluator, relinks);
+
+    ss.str(string());
 }
-void query_exec(string query, string queriespath)
+
+void sum_exec_where1(string query, string queriespath, size_t pos, SEALContext context, Evaluator *evaluator, RelinKeys relinks)
+{
+    string c1, c, col, table, temp, cond, num, comp, num_dir;
+    string delimiter = " ";
+    string coldelimiter = " FROM ";
+    string tabdelimiter = " WHERE ";
+    vector<string> cond_nums, cond_cols;
+    vector<int> mode;
+
+    stringstream ss;
+    char systemcall[500];
+    char *coldir, *tablename;
+
+    //cout << query << "94u40707" << endl;
+    // get the SUM token out
+    pos = query.find(delimiter);
+    temp = query.substr(0, pos);
+    query.erase(0, pos + delimiter.length());
+    // get the collumn to be summed
+    pos = query.find(coldelimiter);
+    col = query.substr(0, pos);
+    query.erase(0, pos + coldelimiter.length());
+
+    // get table name
+    pos = query.find(tabdelimiter);
+    table = query.substr(0, pos);
+    query.erase(0, pos + tabdelimiter.length());
+    tablename = &table[0];
+
+    // check table exists
+    string p = "Server/Database/";
+    p.append(table);
+    char *tabledir = &p[0];
+    if (!chkdir(tabledir))
+    {
+        cout << "Table doesn't exist";
+        exit(1);
+    }
+
+    // Get directory of collumn
+    ss << p << "/" << col;
+    c = ss.str();
+    cout << c << endl;
+    coldir = &c[0];
+    cout << coldir << endl;
+    ss.str(string());
+    if (!chkdir(coldir))
+    {
+        cout << "Collumn doesn't exist";
+        exit(1);
+    }
+    // get collumn to compare
+    pos = query.find(delimiter);
+    c1 = query.substr(0, pos);
+    query.erase(0, pos + delimiter.length());
+    //cout << c1 << endl;
+    ss << p << "/" << c1;
+    col = ss.str();
+    //cout << col << endl;
+    cond_cols.push_back(col);
+    ss.str(string());
+
+    // get type of comparison
+    pos = query.find(delimiter);
+    comp = query.substr(0, pos);
+    query.erase(0, pos + delimiter.length());
+    cout << query << endl;
+
+    if (comp.compare(">") == 0)
+    {
+        mode.push_back(0);
+    }
+    else if (comp.compare("=") == 0)
+    {
+        mode.push_back(1);
+    }
+    else if (comp.compare("<") == 0)
+    {
+        mode.push_back(2);
+    }
+
+    // cout << mode << endl;
+    // get number to be compared
+    pos = query.find(delimiter);
+    num = query.substr(0, pos);
+    query.erase(0, pos + delimiter.length());
+    cout << num << "numunu" << endl;
+
+    ss << queriespath << "/" << num;
+    num_dir = ss.str();
+    cond_nums.push_back(num_dir);
+    ss.str(string());
+
+    sumcolumn_where(coldir, cond_cols, mode, cond_nums, context, evaluator, relinks);
+}
+
+void sum_exec_where1_debug(string query, string queriespath, size_t pos, SEALContext context, Evaluator *evaluator, RelinKeys relinks, Decryptor *decryptor)
+{
+    string c1, c, col, table, temp, cond, num, comp, num_dir;
+    string delimiter = " ";
+    string coldelimiter = " FROM ";
+    string tabdelimiter = " WHERE ";
+    vector<string> cond_nums, cond_cols;
+    vector<int> mode;
+
+    stringstream ss;
+    char systemcall[500];
+    char *coldir, *tablename;
+
+    //cout << query << "94u40707" << endl;
+    // get the SUM token out
+    pos = query.find(delimiter);
+    temp = query.substr(0, pos);
+    query.erase(0, pos + delimiter.length());
+    // get the collumn to be summed
+    pos = query.find(coldelimiter);
+    col = query.substr(0, pos);
+    query.erase(0, pos + coldelimiter.length());
+
+    // get table name
+    pos = query.find(tabdelimiter);
+    table = query.substr(0, pos);
+    query.erase(0, pos + tabdelimiter.length());
+    tablename = &table[0];
+
+    // check table exists
+    string p = "Server/Database/";
+    p.append(table);
+    char *tabledir = &p[0];
+    if (!chkdir(tabledir))
+    {
+        cout << "Table doesn't exist";
+        exit(1);
+    }
+
+    // Get directory of collumn
+    ss << p << "/" << col;
+    c = ss.str();
+    cout << c << endl;
+    coldir = &c[0];
+    cout << coldir << endl;
+    ss.str(string());
+    if (!chkdir(coldir))
+    {
+        cout << "Collumn doesn't exist";
+        exit(1);
+    }
+    // get collumn to compare
+    pos = query.find(delimiter);
+    c1 = query.substr(0, pos);
+    query.erase(0, pos + delimiter.length());
+    //cout << c1 << endl;
+    ss << p << "/" << c1;
+    col = ss.str();
+    //cout << col << endl;
+    cond_cols.push_back(col);
+    ss.str(string());
+
+    // get type of comparison
+    pos = query.find(delimiter);
+    comp = query.substr(0, pos);
+    query.erase(0, pos + delimiter.length());
+    cout << query << endl;
+
+    if (comp.compare(">") == 0)
+    {
+        mode.push_back(0);
+    }
+    else if (comp.compare("=") == 0)
+    {
+        mode.push_back(1);
+    }
+    else if (comp.compare("<") == 0)
+    {
+        mode.push_back(2);
+    }
+
+    // cout << mode << endl;
+    // get number to be compared
+    pos = query.find(delimiter);
+    num = query.substr(0, pos);
+    query.erase(0, pos + delimiter.length());
+    cout << num << "numunu" << endl;
+
+    ss << queriespath << "/" << num;
+    num_dir = ss.str();
+    cond_nums.push_back(num_dir);
+    ss.str(string());
+
+    sumcolumn_where_debug(coldir, cond_cols, mode, cond_nums, context, evaluator, relinks, decryptor);
+}
+
+void query_exec(string query, string queriespath, SEALContext context, Evaluator *evaluator, RelinKeys relinks)
 {
     string delimiter = " ";
     string token;
     string s1 = "WHERE";
     string s2 = "AND";
+    string s3 = "SUM";
     size_t pos = query.find(delimiter);
     token = query.substr(0, pos);
     query.erase(0, pos + delimiter.length());
@@ -236,8 +758,29 @@ void query_exec(string query, string queriespath)
     }
     else if (token.compare("SELECT") == 0)
     {
-        // If there is a condition
-        if (query.find(s1) != std::string::npos)
+        // if it's a SUM
+        if (query.find(s3) != std::string::npos)
+        {
+            if (query.find(s1) != std::string::npos)
+            {
+                // if there is a second condition
+                if (query.find(s2) != std::string::npos)
+                {
+                    cout << "2 cond" << endl;
+                    //select_exec_where2()
+                }
+                else
+                {
+                    //cout << "1 cond" << endl;
+                    sum_exec_where1(query, queriespath, pos, context, evaluator, relinks);
+                }
+            }
+            else
+            {
+                sum_exec(query, pos, context, evaluator, relinks);
+            }
+        }
+        else if (query.find(s1) != std::string::npos) // If there's a condition
         {
             // if there is a second condition
             if (query.find(s2) != std::string::npos)
@@ -247,8 +790,74 @@ void query_exec(string query, string queriespath)
             }
             else
             {
-                cout << "1 cond" << endl;
-                //select_exec_where();
+                //cout << "1 cond" << endl;
+                //select_exec_where1();
+            }
+        }
+        else // if there is no condition
+        {
+            select_exec(query, pos);
+        }
+    }
+}
+
+void query_exec_debug(string query, string queriespath, SEALContext context, Evaluator *evaluator, RelinKeys relinks, Decryptor *decryptor)
+{
+    string delimiter = " ";
+    string token;
+    string s1 = "WHERE";
+    string s2 = "AND";
+    string s3 = "SUM";
+    size_t pos = query.find(delimiter);
+    token = query.substr(0, pos);
+    query.erase(0, pos + delimiter.length());
+
+    //cout << query << endl;
+
+    if (token.compare("CREATE") == 0)
+    {
+        create_exec(query, pos);
+    }
+    else if (token.compare("INSERT") == 0)
+    {
+        insert_exec(query, pos, queriespath);
+    }
+    else if (token.compare("SELECT") == 0)
+    {
+        // if it's a SUM
+        if (query.find(s3) != std::string::npos)
+        {
+            if (query.find(s1) != std::string::npos)
+            {
+                // if there is a second condition
+                if (query.find(s2) != std::string::npos)
+                {
+                    cout << "2 cond" << endl;
+                    //select_exec_where2()
+                }
+                else
+                {
+                    //cout << "1 cond" << endl;
+                    sum_exec_where1_debug(query, queriespath, pos, context, evaluator, relinks, decryptor);
+                }
+            }
+            else
+            {
+                sum_exec(query, pos, context, evaluator, relinks);
+            }
+        }
+        else if (query.find(s1) != std::string::npos) // If there's a condition
+        {
+            // if there is a second condition
+            if (query.find(s2) != std::string::npos)
+            {
+                cout << "2 cond" << endl;
+                //select_exec_where2()
+            }
+            else
+            {
+                //cout << "1 cond" << endl;
+                //select_exec_where1();
             }
         }
         else // if there is no condition
@@ -367,79 +976,6 @@ void comparecolumn(char *columndir, char *intdir, SEALContext context, Evaluator
     closedir(folder);
 }
 
-/**
- * @brief  It takes a column and sums every entry.
- * @note   Function is supposed to be called in SELECT SUM queries without where
- * @param  *columndir: Path to column folder
- * @param  *intdir: Path to number to be compared to
- * @param  context: 
- * @param  evaluator: 
- * @param  relinks: 
- * @retval None
- */
-void sumcolumn(char *columndir, SEALContext context, Evaluator *evaluator, RelinKeys relinks)
-{
-    DIR *folder;
-    stringstream ss;
-    string fullpath, aux, auxdir, auxfile, auxdir_hex;
-    char *dirpath, *resultfile, *resultdir, *enc_dir, *hexdir, *dir;
-    char systemcall[500];
-    struct dirent *entry;
-
-    Ciphertext x_hex, sum_total;
-    vector<Ciphertext> x_bin;
-    bool first = true;
-    // open column directory to iterate through entries
-    folder = opendir(columndir);
-
-    if (folder == NULL)
-    {
-        perror("Unable to read directory");
-        exit(1);
-    }
-    while ((entry = readdir(folder)))
-    {
-        if (!strcmp(entry->d_name, ".") || !strcmp(entry->d_name, "..")) // ignore non important entries
-        {
-            // do nothing (straight logic)
-        }
-        else if (entry->d_type == DT_DIR) // if the entry is a folder(only folder inside directory would be the bin folder)
-        {
-            // open directory
-            cout << entry->d_name << endl;
-            // Get fullpath for number in entry
-            ss << columndir << "/" << entry->d_name;
-            fullpath = ss.str();
-            dirpath = &fullpath[0];
-            cout << dirpath << endl;
-            // load entry encryptons into x_hex and x_bin variables
-            dec_int_total(&x_hex, &x_bin, dirpath, context);
-            if (first)
-            {
-                // for first entry just insert this
-                sum_total = x_hex;
-                first = false;
-            }
-            else
-            {
-                //add the entry to the result
-                (*evaluator).add_inplace(sum_total, x_hex);
-            }
-            //Clear contents of previous
-            x_bin.clear();
-            fullpath.clear();
-            ss.str(string());
-        }
-    }
-    closedir(folder);
-    auxdir = "Server/Result";
-    resultdir = &auxdir[0];
-    auxfile = "sum.res";
-    resultfile = &auxfile[0];
-    // Copy result of the comparison to the folder with the respective number
-    save_hom_enc(sum_total, resultdir, resultfile);
-}
-
 //TODO Function similar to sumcolumn but that it also checks a condition
 int main(int argc, char *argv[])
 {
@@ -447,14 +983,16 @@ int main(int argc, char *argv[])
     char directoryy[50] = "y";
     char directoryz[50] = "z";
     char directoryk[50] = "k";
+    char directoryl[50] = "l";
     const char *filepath = "Server/Queries/Client1Query/msg.txt";
     string qpath = "Server/Queries/Client1Query";
     int i = 1;
-    int x = 10;
-    int y = 5;
-    int z = 14;
-    int k = 8;
-    int n_bit = 4;
+    int x = 7;
+    int y = 4;
+    int z = 5;
+    int k = 6;
+    int l = 5;
+    int n_bit = 3;
     char systemcall[500];
     size_t pos;
     Ciphertext x_hex, y_hex, z_hex, res, x_r, y_r;
@@ -466,7 +1004,7 @@ int main(int argc, char *argv[])
     system("cd Server && mkdir Queries");
     system("cd Server/Queries && mkdir Client1Query");
 
-    SEALContext context = create_context(8192, 128);
+    SEALContext context = create_context(8192, 64);
     KeyGenerator keygen(context);
     PublicKey public_key;
     keygen.create_public_key(public_key);
@@ -485,10 +1023,13 @@ int main(int argc, char *argv[])
 
     enc_int_total(k, &encryptor, directoryk, n_bit);
 
+    enc_int_total(l, &encryptor, directoryl, n_bit);
+
     system("mv x Server/Queries/Client1Query");
     system("mv y Server/Queries/Client1Query");
     system("mv z Server/Queries/Client1Query");
     system("mv k Server/Queries/Client1Query");
+    system("mv l Server/Queries/Client1Query");
 
     string sql = "CREATE table col1 col2 ";
     fstream fb;
@@ -505,7 +1046,7 @@ int main(int argc, char *argv[])
     }
     fb.close();
 
-    query_exec(query, qpath);
+    query_exec(query, qpath, context, &evaluator, relin_keys);
 
     sql = "INSERT table col1 col2 VALUES x y ";
     fb.open(filepath, fstream::out);
@@ -520,7 +1061,7 @@ int main(int argc, char *argv[])
     }
     fb.close();
 
-    query_exec(query, qpath);
+    query_exec(query, qpath, context, &evaluator, relin_keys);
 
     sql = "INSERT table col1 col2 VALUES z k ";
     fb.open(filepath, fstream::out);
@@ -535,9 +1076,9 @@ int main(int argc, char *argv[])
     }
     fb.close();
 
-    query_exec(query, qpath);
+    query_exec(query, qpath, context, &evaluator, relin_keys);
 
-    sql = "SELECT col1 col2 FROM table ";
+    sql = "SELECT SUM col2 FROM table WHERE col1 = l ";
     fb.open(filepath, fstream::out);
     fb << sql;
     fb.close();
@@ -550,7 +1091,17 @@ int main(int argc, char *argv[])
     }
     fb.close();
 
-    query_exec(query, qpath);
+    //query_exec_debug(query, qpath, context, &evaluator, relin_keys, &decryptor);
+
+    query_exec(query, qpath, context, &evaluator, relin_keys);
+
+    string d = "Server/Result";
+    char *dir = &d[0];
+    string file = "sum.res";
+    char *filename = &file[0];
+    res = load_hom_enc(dir, filename, context);
+    decryptor.decrypt(res, result);
+    cout << "SUM = " << h2d(result.to_string()) << endl;
 
     /*
     string t;
@@ -618,7 +1169,7 @@ int main(int argc, char *argv[])
     cout << "x+y+z = "<< h2d(result.to_string()) << endl;
     */
 
-    /*    
+    /*
     Ciphertext x_encrypted, y_encrypted;
     Plaintext x_plain(to_string(x)), y_plain(to_string(y));
 
