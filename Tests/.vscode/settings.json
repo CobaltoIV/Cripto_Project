@@ -2,6 +2,7 @@
     "files.associations": {
         "*.sql": "postgres",
         "*.cgi": "python",
+        "*.h": "cpp",
         "algorithm": "cpp",
         "atomic": "cpp",
         "cctype": "cpp",
@@ -50,6 +51,9 @@
         "xstddef": "cpp",
         "xstring": "cpp",
         "xtr1common": "cpp",
-        "xutility": "cpp"
+        "xutility": "cpp",
+        "xlocale": "cpp",
+        "filesystem": "cpp",
+        "xiosbase": "cpp"
     }
 }
