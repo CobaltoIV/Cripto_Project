@@ -133,10 +133,3 @@ bool createdir(char* dirpath);
 
 string getlinenumber(char *columndir);
 
-void create_exec(string query, size_t pos);
-
-void query_exec(string query, string queriespath);
-
-void insert_exec(string query, size_t pos, string queriespath);
-
-void select_exec(string query, size_t pos);
