@@ -5,11 +5,12 @@ project(project VERSION 1.0)
 add_subdirectory(CompFunc)
 add_subdirectory(HelpFunc)
 
+
 add_executable(test test.cpp)
 
 find_package(SEAL 3.6.0 REQUIRED)
 
-target_link_libraries(test SEAL::seal CompFunc HelpFunc)  
+target_link_libraries(test SEAL::seal CompFunc HelpFunc )  
 
 
 target_include_directories(test PUBLIC 

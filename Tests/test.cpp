@@ -22,6 +22,242 @@
 using namespace std;
 using namespace seal;
 
+void create_exec(string query, size_t pos)
+{
+    string col, c, token;
+    string delimiter = " ";
+    // get tablename
+    pos = query.find(delimiter);
+    token = query.substr(0, pos);
+    query.erase(0, pos + delimiter.length());
+    string p = "Server/Database/";
+    p.append(token);
+    char *dir = &p[0];
+    if (!createdir(dir))
+    {
+        exit(1);
+    }
+    //find rest of the collumns
+    while ((pos = query.find(delimiter)) != query.npos)
+    {
+        stringstream ss;
+        char *coldir;
+        //Get a column name from the input string
+        col = query.substr(0, pos);
+        //cout << col << endl;
+        //Remove the current column name from the input string
+        query.erase(0, pos + delimiter.length());
+        ss << p << "/" << col;
+        c = ss.str();
+        coldir = &c[0];
+        createdir(coldir);
+        ss.str(string());
+    }
+
+    ofstream fb;
+    fb.open("Server/Result/res.txt");
+    fb << "CREATE Sucessfull";
+    fb.close();
+}
+
+void insert_exec(string query, size_t pos, string queriespath)
+{
+    string allcolls, c, col, table, value, v, valuename;
+    vector<string> cols;
+    vector<string> values;
+    string delimiter = " ";
+    string coldelimiter = "VALUES ";
+    stringstream ss;
+    char systemcall[500];
+    char *coldir, *valuedir, *linedir, *valuehex;
+
+    // get tablename
+    pos = query.find(delimiter);
+    table = query.substr(0, pos);
+    query.erase(0, pos + delimiter.length());
+    string p = "Server/Database/";
+    p.append(table);
+    char *tabledir = &p[0];
+    if (!chkdir(tabledir))
+    {
+        cout << "Table doesn't exist";
+        exit(1);
+    }
+
+    pos = query.find(coldelimiter);
+    allcolls = query.substr(0, pos);
+    query.erase(0, pos + coldelimiter.length());
+
+    //cout << allcolls << endl;
+    //cout << query << endl;
+    //get the values into a vector
+    while ((pos = query.find(delimiter)) != query.npos)
+    {
+        //Get a value name from the input string
+        value = query.substr(0, pos);
+        //Remove the current value name from the input string
+        query.erase(0, pos + delimiter.length());
+        ss << queriespath << "/" << value;
+        v = ss.str();
+        values.push_back(v);
+        ss.str(string());
+    }
+    // get the collumns into a vector
+    while ((pos = allcolls.find(delimiter)) != allcolls.npos)
+    {
+        //Get a column name from the input string
+        col = allcolls.substr(0, pos);
+        //cout << value << endl;
+        //Remove the current column name from the input string
+        allcolls.erase(0, pos + delimiter.length());
+        ss << "Server/Database/" << table << "/" << col;
+        c = ss.str();
+        //cout << c << endl;
+        cols.push_back(c);
+        ss.str(string());
+    }
+    // Doesn't matter which collumn they all have the same number of lines
+    col = cols[0];
+    coldir = &col[0];
+    string line_number = getlinenumber(coldir);
+    linedir = &line_number[0];
+    for (int i = 0; i < cols.size(); i++) // move numbers to respective collumns with the rigth line number
+    {
+        // Get directories for collumns and values
+        col = cols[i];
+        coldir = &col[0];
+        value = values[i];
+        valuedir = &value[0];
+        // create directory to copy value to collumn using the number of line
+        sprintf(systemcall, "mkdir %s/%s", coldir, linedir);
+        system(systemcall);
+
+        //std::cout << "Splitting: " << value << endl;
+        unsigned found = value.find_last_of("/\\");
+        //std::cout << " path: " << value.substr(0, found) << endl;
+        //std::cout << " file: " << value.substr(found + 1) << endl;
+        // get name of the .hex encryption so we can alter it to the number of the line
+        valuename = value.substr(found + 1);
+        valuehex = &valuename[0];
+
+        // change name of .hex
+        sprintf(systemcall, "mv %s/%s.hex %s/%s.hex", valuedir, valuehex, valuedir, linedir);
+        system(systemcall);
+
+        // copy number
+        sprintf(systemcall, "cp -r %s/* %s/%s", valuedir, coldir, linedir);
+        system(systemcall);
+    }
+    // Send Sucess message
+    ofstream fb;
+    fb.open("Server/Result/res.txt");
+    fb << "INSERT Sucessfull";
+    fb.close();
+}
+
+void select_exec(string query, size_t pos)
+{
+    string allcolls, c, col, table, value, v, valuename;
+    vector<string> cols;
+    string delimiter = " ";
+    string coldelimiter = "FROM ";
+    stringstream ss;
+    char systemcall[500];
+    char *coldir, *tablename, *linedir, *valuehex;
+
+    // get all collumns
+    pos = query.find(coldelimiter);
+    allcolls = query.substr(0, pos);
+    query.erase(0, pos + coldelimiter.length());
+
+    // get table name
+    pos = query.find(delimiter);
+    table = query.substr(0, pos);
+    query.erase(0, pos + delimiter.length());
+    tablename = &table[0];
+
+    sprintf(systemcall, "mkdir Server/Result/%s", tablename);
+    system(systemcall);
+    // check table exists
+    string p = "Server/Database/";
+    p.append(table);
+    char *tabledir = &p[0];
+    if (!chkdir(tabledir))
+    {
+        cout << "Table doesn't exist";
+        exit(1);
+    }
+
+    while ((pos = allcolls.find(delimiter)) != allcolls.npos)
+    {
+        //Get a column name from the input string
+        col = allcolls.substr(0, pos);
+        //Remove the current column name from the input string
+        allcolls.erase(0, pos + delimiter.length());
+        // Get directory of collum
+        ss << p << "/" << col;
+        c = ss.str();
+        char *coldir = &c[0];
+        if (!chkdir(coldir))
+        {
+            cout << "Collumn doesn't exist";
+            exit(1);
+        }
+
+        sprintf(systemcall, "cp -r %s Server/Result/%s ", coldir, tablename);
+        system(systemcall);
+
+        ss.str(string());
+    }
+}
+
+void select_exec_where(string query, size_t pos)
+{
+}
+void query_exec(string query, string queriespath)
+{
+    string delimiter = " ";
+    string token;
+    string s1 = "WHERE";
+    string s2 = "AND";
+    size_t pos = query.find(delimiter);
+    token = query.substr(0, pos);
+    query.erase(0, pos + delimiter.length());
+
+    //cout << query << endl;
+
+    if (token.compare("CREATE") == 0)
+    {
+        create_exec(query, pos);
+    }
+    else if (token.compare("INSERT") == 0)
+    {
+        insert_exec(query, pos, queriespath);
+    }
+    else if (token.compare("SELECT") == 0)
+    {
+        // If there is a condition
+        if (query.find(s1) != std::string::npos)
+        {
+            // if there is a second condition
+            if (query.find(s2) != std::string::npos)
+            {
+                cout << "2 cond" << endl;
+                //select_exec_where2()
+            }
+            else
+            {
+                cout << "1 cond" << endl;
+                //select_exec_where();
+            }
+        }
+        else // if there is no condition
+        {
+            select_exec(query, pos);
+        }
+    }
+}
+
 /**
  * @brief  It takes a column and a encrypted number and compares every entry of the column against it. The comparison saved is defined by the mode
  * @note   Function is supposed to be called in SELECT ... Where queries
@@ -221,7 +457,7 @@ int main(int argc, char *argv[])
     int n_bit = 4;
     char systemcall[500];
     size_t pos;
-    Ciphertext x_hex, y_hex, z_hex, res, x_r,y_r;
+    Ciphertext x_hex, y_hex, z_hex, res, x_r, y_r;
     Plaintext result;
     system("rm -r Server");
     system("mkdir Server");
