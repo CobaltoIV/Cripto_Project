@@ -62,10 +62,10 @@ RM = /usr/bin/cmake -E rm -f
 EQUALS = =
 
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = /mnt/c/Users/ricas/Documents/IST/5ºano/1sem/Cripto/Project/Tests
+CMAKE_SOURCE_DIR = /mnt/c/Users/ricas/Documents/IST/5ºano/1sem/Cripto/Project/Git/Cripto_Project/Tests
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = /mnt/c/Users/ricas/Documents/IST/5ºano/1sem/Cripto/Project/Tests
+CMAKE_BINARY_DIR = /mnt/c/Users/ricas/Documents/IST/5ºano/1sem/Cripto/Project/Git/Cripto_Project/Tests
 
 # Include any dependencies generated for this target.
 include HelpFunc/CMakeFiles/HelpFunc.dir/depend.make
@@ -78,16 +78,16 @@ include HelpFunc/CMakeFiles/HelpFunc.dir/flags.make
 
 HelpFunc/CMakeFiles/HelpFunc.dir/enc_dec_func.cpp.o: HelpFunc/CMakeFiles/HelpFunc.dir/flags.make
 HelpFunc/CMakeFiles/HelpFunc.dir/enc_dec_func.cpp.o: HelpFunc/enc_dec_func.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/mnt/c/Users/ricas/Documents/IST/5ºano/1sem/Cripto/Project/Tests/CMakeFiles --progress-num=$(CMAKE_PROGRESS_1) "Building CXX object HelpFunc/CMakeFiles/HelpFunc.dir/enc_dec_func.cpp.o"
-	cd /mnt/c/Users/ricas/Documents/IST/5ºano/1sem/Cripto/Project/Tests/HelpFunc && /usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -o CMakeFiles/HelpFunc.dir/enc_dec_func.cpp.o -c /mnt/c/Users/ricas/Documents/IST/5ºano/1sem/Cripto/Project/Tests/HelpFunc/enc_dec_func.cpp
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/mnt/c/Users/ricas/Documents/IST/5ºano/1sem/Cripto/Project/Git/Cripto_Project/Tests/CMakeFiles --progress-num=$(CMAKE_PROGRESS_1) "Building CXX object HelpFunc/CMakeFiles/HelpFunc.dir/enc_dec_func.cpp.o"
+	cd /mnt/c/Users/ricas/Documents/IST/5ºano/1sem/Cripto/Project/Git/Cripto_Project/Tests/HelpFunc && /usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -o CMakeFiles/HelpFunc.dir/enc_dec_func.cpp.o -c /mnt/c/Users/ricas/Documents/IST/5ºano/1sem/Cripto/Project/Git/Cripto_Project/Tests/HelpFunc/enc_dec_func.cpp
 
 HelpFunc/CMakeFiles/HelpFunc.dir/enc_dec_func.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/HelpFunc.dir/enc_dec_func.cpp.i"
-	cd /mnt/c/Users/ricas/Documents/IST/5ºano/1sem/Cripto/Project/Tests/HelpFunc && /usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /mnt/c/Users/ricas/Documents/IST/5ºano/1sem/Cripto/Project/Tests/HelpFunc/enc_dec_func.cpp > CMakeFiles/HelpFunc.dir/enc_dec_func.cpp.i
+	cd /mnt/c/Users/ricas/Documents/IST/5ºano/1sem/Cripto/Project/Git/Cripto_Project/Tests/HelpFunc && /usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /mnt/c/Users/ricas/Documents/IST/5ºano/1sem/Cripto/Project/Git/Cripto_Project/Tests/HelpFunc/enc_dec_func.cpp > CMakeFiles/HelpFunc.dir/enc_dec_func.cpp.i
 
 HelpFunc/CMakeFiles/HelpFunc.dir/enc_dec_func.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/HelpFunc.dir/enc_dec_func.cpp.s"
-	cd /mnt/c/Users/ricas/Documents/IST/5ºano/1sem/Cripto/Project/Tests/HelpFunc && /usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /mnt/c/Users/ricas/Documents/IST/5ºano/1sem/Cripto/Project/Tests/HelpFunc/enc_dec_func.cpp -o CMakeFiles/HelpFunc.dir/enc_dec_func.cpp.s
+	cd /mnt/c/Users/ricas/Documents/IST/5ºano/1sem/Cripto/Project/Git/Cripto_Project/Tests/HelpFunc && /usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /mnt/c/Users/ricas/Documents/IST/5ºano/1sem/Cripto/Project/Git/Cripto_Project/Tests/HelpFunc/enc_dec_func.cpp -o CMakeFiles/HelpFunc.dir/enc_dec_func.cpp.s
 
 # Object files for target HelpFunc
 HelpFunc_OBJECTS = \
@@ -99,9 +99,9 @@ HelpFunc_EXTERNAL_OBJECTS =
 HelpFunc/libHelpFunc.a: HelpFunc/CMakeFiles/HelpFunc.dir/enc_dec_func.cpp.o
 HelpFunc/libHelpFunc.a: HelpFunc/CMakeFiles/HelpFunc.dir/build.make
 HelpFunc/libHelpFunc.a: HelpFunc/CMakeFiles/HelpFunc.dir/link.txt
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --bold --progress-dir=/mnt/c/Users/ricas/Documents/IST/5ºano/1sem/Cripto/Project/Tests/CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Linking CXX static library libHelpFunc.a"
-	cd /mnt/c/Users/ricas/Documents/IST/5ºano/1sem/Cripto/Project/Tests/HelpFunc && $(CMAKE_COMMAND) -P CMakeFiles/HelpFunc.dir/cmake_clean_target.cmake
-	cd /mnt/c/Users/ricas/Documents/IST/5ºano/1sem/Cripto/Project/Tests/HelpFunc && $(CMAKE_COMMAND) -E cmake_link_script CMakeFiles/HelpFunc.dir/link.txt --verbose=$(VERBOSE)
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --bold --progress-dir=/mnt/c/Users/ricas/Documents/IST/5ºano/1sem/Cripto/Project/Git/Cripto_Project/Tests/CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Linking CXX static library libHelpFunc.a"
+	cd /mnt/c/Users/ricas/Documents/IST/5ºano/1sem/Cripto/Project/Git/Cripto_Project/Tests/HelpFunc && $(CMAKE_COMMAND) -P CMakeFiles/HelpFunc.dir/cmake_clean_target.cmake
+	cd /mnt/c/Users/ricas/Documents/IST/5ºano/1sem/Cripto/Project/Git/Cripto_Project/Tests/HelpFunc && $(CMAKE_COMMAND) -E cmake_link_script CMakeFiles/HelpFunc.dir/link.txt --verbose=$(VERBOSE)
 
 # Rule to build all files generated by this target.
 HelpFunc/CMakeFiles/HelpFunc.dir/build: HelpFunc/libHelpFunc.a
@@ -109,10 +109,10 @@ HelpFunc/CMakeFiles/HelpFunc.dir/build: HelpFunc/libHelpFunc.a
 .PHONY : HelpFunc/CMakeFiles/HelpFunc.dir/build
 
 HelpFunc/CMakeFiles/HelpFunc.dir/clean:
-	cd /mnt/c/Users/ricas/Documents/IST/5ºano/1sem/Cripto/Project/Tests/HelpFunc && $(CMAKE_COMMAND) -P CMakeFiles/HelpFunc.dir/cmake_clean.cmake
+	cd /mnt/c/Users/ricas/Documents/IST/5ºano/1sem/Cripto/Project/Git/Cripto_Project/Tests/HelpFunc && $(CMAKE_COMMAND) -P CMakeFiles/HelpFunc.dir/cmake_clean.cmake
 .PHONY : HelpFunc/CMakeFiles/HelpFunc.dir/clean
 
 HelpFunc/CMakeFiles/HelpFunc.dir/depend:
-	cd /mnt/c/Users/ricas/Documents/IST/5ºano/1sem/Cripto/Project/Tests && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" /mnt/c/Users/ricas/Documents/IST/5ºano/1sem/Cripto/Project/Tests /mnt/c/Users/ricas/Documents/IST/5ºano/1sem/Cripto/Project/Tests/HelpFunc /mnt/c/Users/ricas/Documents/IST/5ºano/1sem/Cripto/Project/Tests /mnt/c/Users/ricas/Documents/IST/5ºano/1sem/Cripto/Project/Tests/HelpFunc /mnt/c/Users/ricas/Documents/IST/5ºano/1sem/Cripto/Project/Tests/HelpFunc/CMakeFiles/HelpFunc.dir/DependInfo.cmake --color=$(COLOR)
+	cd /mnt/c/Users/ricas/Documents/IST/5ºano/1sem/Cripto/Project/Git/Cripto_Project/Tests && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" /mnt/c/Users/ricas/Documents/IST/5ºano/1sem/Cripto/Project/Git/Cripto_Project/Tests /mnt/c/Users/ricas/Documents/IST/5ºano/1sem/Cripto/Project/Git/Cripto_Project/Tests/HelpFunc /mnt/c/Users/ricas/Documents/IST/5ºano/1sem/Cripto/Project/Git/Cripto_Project/Tests /mnt/c/Users/ricas/Documents/IST/5ºano/1sem/Cripto/Project/Git/Cripto_Project/Tests/HelpFunc /mnt/c/Users/ricas/Documents/IST/5ºano/1sem/Cripto/Project/Git/Cripto_Project/Tests/HelpFunc/CMakeFiles/HelpFunc.dir/DependInfo.cmake --color=$(COLOR)
 .PHONY : HelpFunc/CMakeFiles/HelpFunc.dir/depend
 

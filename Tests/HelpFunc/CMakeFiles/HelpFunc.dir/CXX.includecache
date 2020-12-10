@@ -6,7 +6,7 @@
 
 #IncludeRegexTransform: 
 
-/mnt/c/Users/ricas/Documents/IST/5ºano/1sem/Cripto/Project/Tests/HelpFunc/enc_dec_func.cpp
+/mnt/c/Users/ricas/Documents/IST/5ºano/1sem/Cripto/Project/Git/Cripto_Project/Tests/HelpFunc/enc_dec_func.cpp
 cstddef
 -
 iostream
@@ -46,7 +46,7 @@ string.h
 dirent.h
 -
 seal/seal.h
-/mnt/c/Users/ricas/Documents/IST/5ºano/1sem/Cripto/Project/Tests/HelpFunc/seal/seal.h
+/mnt/c/Users/ricas/Documents/IST/5ºano/1sem/Cripto/Project/Git/Cripto_Project/Tests/HelpFunc/seal/seal.h
 
 /usr/local/include/SEAL-3.6/gsl/gsl_assert
 intrin.h

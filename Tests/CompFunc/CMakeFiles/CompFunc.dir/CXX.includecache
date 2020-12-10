@@ -6,7 +6,7 @@
 
 #IncludeRegexTransform: 
 
-/mnt/c/Users/ricas/Documents/IST/5ºano/1sem/Cripto/Project/Tests/CompFunc/comparator.cpp
+/mnt/c/Users/ricas/Documents/IST/5ºano/1sem/Cripto/Project/Git/Cripto_Project/Tests/CompFunc/comparator.cpp
 iostream
 -
 algorithm
@@ -38,7 +38,7 @@ thread
 vector
 -
 seal/seal.h
-/mnt/c/Users/ricas/Documents/IST/5ºano/1sem/Cripto/Project/Tests/CompFunc/seal/seal.h
+/mnt/c/Users/ricas/Documents/IST/5ºano/1sem/Cripto/Project/Git/Cripto_Project/Tests/CompFunc/seal/seal.h
 
 /usr/local/include/SEAL-3.6/gsl/gsl_assert
 intrin.h
