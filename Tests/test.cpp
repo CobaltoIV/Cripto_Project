@@ -22,7 +22,6 @@
 using namespace std;
 using namespace seal;
 
-
 void create_exec(string query, size_t pos)
 {
     string col, c, token;
@@ -205,17 +204,22 @@ void select_exec(string query, size_t pos)
             exit(1);
         }
 
-        sprintf(systemcall, "cp -r %s Server/Result/%s ",coldir, tablename);
+        sprintf(systemcall, "cp -r %s Server/Result/%s ", coldir, tablename);
         system(systemcall);
 
         ss.str(string());
-
     }
+}
+
+void select_exec_where(string query, size_t pos)
+{
 }
 void query_exec(string query, string queriespath)
 {
     string delimiter = " ";
     string token;
+    string s1 = "WHERE";
+    string s2 = "AND";
     size_t pos = query.find(delimiter);
     token = query.substr(0, pos);
     query.erase(0, pos + delimiter.length());
@@ -232,7 +236,25 @@ void query_exec(string query, string queriespath)
     }
     else if (token.compare("SELECT") == 0)
     {
-        select_exec(query, pos);
+        // If there is a condition
+        if (query.find(s1) != std::string::npos)
+        {
+            // if there is a second condition
+            if (query.find(s2) != std::string::npos)
+            {
+                cout << "2 cond" << endl;
+                //select_exec_where2()
+            }
+            else
+            {
+                cout << "1 cond" << endl;
+                //select_exec_where();
+            }
+        }
+        else // if there is no condition
+        {
+            select_exec(query, pos);
+        }
     }
 }
 
@@ -435,7 +457,7 @@ int main(int argc, char *argv[])
     int n_bit = 4;
     char systemcall[500];
     size_t pos;
-    Ciphertext x_hex, y_hex, z_hex, res, x_r,y_r;
+    Ciphertext x_hex, y_hex, z_hex, res, x_r, y_r;
     Plaintext result;
     system("rm -r Server");
     system("mkdir Server");
