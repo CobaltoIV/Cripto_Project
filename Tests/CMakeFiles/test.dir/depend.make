@@ -56,4 +56,6 @@ CMakeFiles/test.dir/test.cpp.o: /usr/local/include/SEAL-3.6/seal/util/uintcore.h
 CMakeFiles/test.dir/test.cpp.o: /usr/local/include/SEAL-3.6/seal/util/ztools.h
 CMakeFiles/test.dir/test.cpp.o: /usr/local/include/SEAL-3.6/seal/valcheck.h
 CMakeFiles/test.dir/test.cpp.o: /usr/local/include/SEAL-3.6/seal/version.h
+CMakeFiles/test.dir/test.cpp.o: CompFunc/CompFunc.h
+CMakeFiles/test.dir/test.cpp.o: HelpFunc/HelpFunc.h
 

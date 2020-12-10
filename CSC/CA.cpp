@@ -82,6 +82,14 @@ int main(int argc, char *argv[])
 
     cout << "Server created"<< endl;
 
+	system("cd Server && mkdir Queries");
+
+	cout << "Server Queries created" << endl;
+
+	system("cd Server && mkdir Database");
+
+	cout << "Server Database created" << endl;
+
 	system("mkdir Clients");
 
     cout << "Clients created"<< endl;

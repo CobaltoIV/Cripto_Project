@@ -4,7 +4,7 @@
 # compile CXX with /usr/bin/c++
 CXX_DEFINES = 
 
-CXX_INCLUDES = -isystem /usr/local/include/SEAL-3.6
+CXX_INCLUDES = -I/mnt/c/Users/ricas/Documents/IST/5ºano/1sem/Cripto/Project/Tests -I/mnt/c/Users/ricas/Documents/IST/5ºano/1sem/Cripto/Project/Tests/CompFunc -I/mnt/c/Users/ricas/Documents/IST/5ºano/1sem/Cripto/Project/Tests/HelpFunc -isystem /usr/local/include/SEAL-3.6
 
 CXX_FLAGS = -pthread -std=gnu++1z
 

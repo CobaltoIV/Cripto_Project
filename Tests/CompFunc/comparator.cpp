@@ -1,99 +1,26 @@
 #include <iostream>
-#include <vector>
+#include <algorithm>
+#include <chrono>
+#include <cstddef>
+#include <fstream>
+#include <iomanip>
+#include <limits>
+#include <memory>
+#include <mutex>
+#include <numeric>
+#include <random>
+#include <sstream>
 #include <string>
-
+#include <thread>
+#include <vector>
+#include "seal/seal.h"
 using namespace std;
-
-int main()
-{
-    vector<string> msg {"Hello", "C++", "World", "from", "VS Code", "and the C++ extension!"};
-
-    for (const string& word : msg)
-    {
-        cout << word << " ";
-    }
-    cout << endl;
-}
-
-
-/**
- * @brief  Converts decimal number into binary
- * @note
- * @param  n: Number to be converted
- * @retval
- */
-vector<int> d2b(int n)
-{
-    vector<int> result;
-    int digit;
-    while (n > 0)
-    {
-        digit = n % 2;
-        n = n / 2;
-        result.insert(result.begin(), digit);
-    }
-    return result;
-}
-
-/**
- * @brief  Encrypts binary vector
- * @note   
- * @param  n: 
- * @param  *encryptor: 
- * @retval 
- */
-vector<Ciphertext> enc_binary(vector<int> n, Encryptor *encryptor)
-{
-    Plaintext b;
-    Ciphertext enc;
-    vector<Ciphertext> result;
-    for (int i = 0; i < n.size(); i++)
-    {
-        b = to_string(n[i]);
-        (*encryptor).encrypt(b, enc);
-        result.push_back(enc);
-    }
-    return result;
-}
-
-/**
- * @brief  Decrypts and prints ciphertext vector
- * @note   
- * @param  n: 
- * @param  *decryptor: 
- * @retval None
- */
-void dec_prt_vec(vector<Ciphertext> n, Decryptor *decryptor)
-{
-    Plaintext result;
-    cout <<"[";
-    for (int i = 0; i < n.size(); i++)
-    {
-        (*decryptor).decrypt(n[i], result);
-        cout << result.to_string();
-    }
-    cout << "]" << endl;
-}
-/**
- * @brief  Prints int vector
- * @note   
- * @param  x: 
- * @retval None
- */
-void print_vec(vector<int> x)
-{
-    cout << "[";
-    for (int i = 0; i < x.size(); i++)
-    {
-        cout << x[i];
-    }
-    cout << "]" << endl;
-}
+using namespace seal;
 
 /**
  * @brief  Implements NOT gate
  * @note   
- * @param  a: 
+ * @param  a: input of gate
  * @param  *evaluator: 
  * @param  relinks: Keys for relinearization
  * @retval 
@@ -103,16 +30,16 @@ Ciphertext NOT(Ciphertext a, Evaluator *evaluator, RelinKeys relinks)
     Ciphertext a_neg, result;
     Plaintext plain_one("1");
     (*evaluator).negate(a, a_neg);
-    (*evaluator).relinearize_inplace(a_neg, relinks);
+    //(*evaluator).relinearize_inplace(a_neg, relinks);
     (*evaluator).add_plain(a_neg, plain_one, result);
-    (*evaluator).relinearize_inplace(result, relinks);
+    //(*evaluator).relinearize_inplace(result, relinks);
     return result;
 }
 /**
  * @brief  Implements AND gate
  * @note   
- * @param  a: 
- * @param  b: 
+ * @param  a: Input 1
+ * @param  b: Input 2
  * @param  *evaluator: 
  * @param  relinks: Keys for relinearization
  * @retval 
@@ -120,7 +47,6 @@ Ciphertext NOT(Ciphertext a, Evaluator *evaluator, RelinKeys relinks)
 Ciphertext AND(Ciphertext a, Ciphertext b, Evaluator *evaluator, RelinKeys relinks)
 {
     Ciphertext result;
-
     (*evaluator).multiply(a, b, result);
     (*evaluator).relinearize_inplace(result, relinks);
     return result;

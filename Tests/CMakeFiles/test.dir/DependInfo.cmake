@@ -10,11 +10,16 @@ set(CMAKE_CXX_COMPILER_ID "GNU")
 
 # The include file search paths:
 set(CMAKE_CXX_TARGET_INCLUDE_PATH
+  "."
+  "CompFunc"
+  "HelpFunc"
   "/usr/local/include/SEAL-3.6"
   )
 
 # Targets to which this target links.
 set(CMAKE_TARGET_LINKED_INFO_FILES
+  "/mnt/c/Users/ricas/Documents/IST/5ºano/1sem/Cripto/Project/Tests/CompFunc/CMakeFiles/CompFunc.dir/DependInfo.cmake"
+  "/mnt/c/Users/ricas/Documents/IST/5ºano/1sem/Cripto/Project/Tests/HelpFunc/CMakeFiles/HelpFunc.dir/DependInfo.cmake"
   )
 
 # Fortran module output directory.
