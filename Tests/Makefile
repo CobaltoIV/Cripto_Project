@@ -143,6 +143,19 @@ test/fast:
 .PHONY : test/fast
 
 #=============================================================================
+# Target rules for targets named hello
+
+# Build rule for target.
+hello: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 hello
+.PHONY : hello
+
+# fast build rule for target.
+hello/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/hello.dir/build.make CMakeFiles/hello.dir/build
+.PHONY : hello/fast
+
+#=============================================================================
 # Target rules for targets named CompFunc
 
 # Build rule for target.
@@ -167,6 +180,33 @@ HelpFunc: cmake_check_build_system
 HelpFunc/fast:
 	$(MAKE) $(MAKESILENT) -f HelpFunc/CMakeFiles/HelpFunc.dir/build.make HelpFunc/CMakeFiles/HelpFunc.dir/build
 .PHONY : HelpFunc/fast
+
+hello.o: hello.cpp.o
+
+.PHONY : hello.o
+
+# target to build an object file
+hello.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/hello.dir/build.make CMakeFiles/hello.dir/hello.cpp.o
+.PHONY : hello.cpp.o
+
+hello.i: hello.cpp.i
+
+.PHONY : hello.i
+
+# target to preprocess a source file
+hello.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/hello.dir/build.make CMakeFiles/hello.dir/hello.cpp.i
+.PHONY : hello.cpp.i
+
+hello.s: hello.cpp.s
+
+.PHONY : hello.s
+
+# target to generate assembly for a file
+hello.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/hello.dir/build.make CMakeFiles/hello.dir/hello.cpp.s
+.PHONY : hello.cpp.s
 
 test.o: test.cpp.o
 
@@ -205,7 +245,11 @@ help:
 	@echo "... rebuild_cache"
 	@echo "... CompFunc"
 	@echo "... HelpFunc"
+	@echo "... hello"
 	@echo "... test"
+	@echo "... hello.o"
+	@echo "... hello.i"
+	@echo "... hello.s"
 	@echo "... test.o"
 	@echo "... test.i"
 	@echo "... test.s"

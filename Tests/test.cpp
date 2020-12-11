@@ -131,14 +131,17 @@ void sumcolumn_where(char *columndir, vector<string> cond_cols, vector<int> mode
                 col_line = ss.str();
 
                 cout << col_line << endl;
+                cout << col << endl;
 
                 col_line_dir = &col_line[0];
                 num = cond_nums[i];
                 numdir = &num[0];
+                cout << num << endl;
                 // load numbers
                 dec_int_total(&num_hex, &num_bin, numdir, context);
                 dec_int_total(&col_hex, &col_bin, col_line_dir, context);
                 //compare
+                cout << "OUTPUT calc" << endl;
                 output = full_homomorphic_comparator(col_bin, num_bin, evaluator, relinks);
 
                 if (i == 0)
@@ -639,6 +642,151 @@ void sum_exec_where1(string query, string queriespath, size_t pos, SEALContext c
     sumcolumn_where(coldir, cond_cols, mode, cond_nums, context, evaluator, relinks);
 }
 
+void sum_exec_where2(string query, string queriespath, size_t pos, SEALContext context, Evaluator *evaluator, RelinKeys relinks)
+{
+    string c1,c2, c, col, col1,col2, table, temp, cond, num1,num2, comp1, comp2, num_dir1,num_dir2, cond1;
+    string delimiter = " ";
+    string coldelimiter = " FROM ";
+    string tabdelimiter = " WHERE ";
+    string conddelimiter = " AND ";
+    vector<string> cond_nums, cond_cols;
+    vector<int> mode;
+
+    stringstream ss;
+    char systemcall[500];
+    char *coldir, *tablename;
+
+    //cout << query << "94u40707" << endl;
+    // get the SUM token out
+    pos = query.find(delimiter);
+    temp = query.substr(0, pos);
+    query.erase(0, pos + delimiter.length());
+    // get the collumn to be summed
+    pos = query.find(coldelimiter);
+    col = query.substr(0, pos);
+    query.erase(0, pos + coldelimiter.length());
+
+    // get table name
+    pos = query.find(tabdelimiter);
+    table = query.substr(0, pos);
+    query.erase(0, pos + tabdelimiter.length());
+    tablename = &table[0];
+
+    // check table exists
+    string p = "Server/Database/";
+    p.append(table);
+    char *tabledir = &p[0];
+    if (!chkdir(tabledir))
+    {
+        cout << "Table doesn't exist";
+        exit(1);
+    }
+
+    // Get directory of collumn
+    ss << p << "/" << col;
+    c = ss.str();
+    cout << c << endl;
+    coldir = &c[0];
+    cout << coldir << endl;
+    ss.str(string());
+    if (!chkdir(coldir))
+    {
+        cout << "Collumn doesn't exist";
+        exit(1);
+    }
+    // get first condition into cond1
+    pos = query.find(conddelimiter);
+    cond1 = query.substr(0, pos);
+    query.erase(0, pos + conddelimiter.length());
+
+    cout << cond1 <<" First cond" << endl;
+    // processing first condition
+    pos = cond1.find(delimiter);
+    c1 = cond1.substr(0, pos);
+    cond1.erase(0, pos + delimiter.length());
+    //cout << c1 << endl;
+    ss << p << "/" << c1;
+    col1 = ss.str();
+    //cout << col << endl;
+    cond_cols.push_back(col1);
+    ss.str(string());
+
+    // get type of comparison
+    pos = cond1.find(delimiter);
+    comp1 = cond1.substr(0, pos);
+    cond1.erase(0, pos + delimiter.length());
+    cout << query << endl;
+
+    if (comp1.compare(">") == 0)
+    {
+        mode.push_back(0);
+    }
+    else if (comp1.compare("=") == 0)
+    {
+        mode.push_back(1);
+    }
+    else if (comp1.compare("<") == 0)
+    {
+        mode.push_back(2);
+    }
+
+    // get number to be compared
+    pos = cond1.find(delimiter);
+    num1 = cond1.substr(0, pos);
+    cond1.erase(0, pos + delimiter.length());
+    cout << num2 << "numunu" << endl;
+
+    ss << queriespath << "/" << num1;
+    num_dir1 = ss.str();
+    cond_nums.push_back(num_dir1);
+    ss.str(string());
+
+    cout << query <<" Second cond" << endl;
+    // Get second condition
+    // get collumn to compare
+    pos = query.find(delimiter);
+    c2 = query.substr(0, pos);
+    query.erase(0, pos + delimiter.length());
+    //cout << c1 << endl;
+    ss << p << "/" << c2;
+    col2 = ss.str();
+    cout << col2 << endl;
+    cond_cols.push_back(col2);
+    ss.str(string());
+
+    // get type of comparison
+    pos = query.find(delimiter);
+    comp2 = query.substr(0, pos);
+    query.erase(0, pos + delimiter.length());
+
+    if (comp2.compare(">") == 0)
+    {
+        mode.push_back(0);
+    }
+    else if (comp2.compare("=") == 0)
+    {
+        mode.push_back(1);
+    }
+    else if (comp2.compare("<") == 0)
+    {
+        mode.push_back(2);
+    }
+
+    // cout << mode << endl;
+    // get number to be compared
+    pos = query.find(delimiter);
+    num2 = query.substr(0, pos);
+    query.erase(0, pos + delimiter.length());
+    cout << num2 << "numunu" << endl;
+
+    ss << queriespath << "/" << num2;
+    num_dir2 = ss.str();
+    cond_nums.push_back(num_dir2);
+    ss.str(string());
+
+    sumcolumn_where(coldir, cond_cols, mode, cond_nums, context, evaluator, relinks);
+}
+
 void sum_exec_where1_debug(string query, string queriespath, size_t pos, SEALContext context, Evaluator *evaluator, RelinKeys relinks, Decryptor *decryptor)
 {
     string c1, c, col, table, temp, cond, num, comp, num_dir;
@@ -767,7 +915,7 @@ void query_exec(string query, string queriespath, SEALContext context, Evaluator
                 if (query.find(s2) != std::string::npos)
                 {
                     cout << "2 cond" << endl;
-                    //select_exec_where2()
+                    sum_exec_where2(query, queriespath, pos, context, evaluator, relinks);
                 }
                 else
                 {
@@ -984,15 +1132,17 @@ int main(int argc, char *argv[])
     char directoryz[50] = "z";
     char directoryk[50] = "k";
     char directoryl[50] = "l";
+    char directoryp[50] = "p";
     const char *filepath = "Server/Queries/Client1Query/msg.txt";
     string qpath = "Server/Queries/Client1Query";
     int i = 1;
-    int x = 7;
-    int y = 4;
-    int z = 5;
-    int k = 6;
+    int x = 13;
+    int y = 10;
+    int z = 9;
+    int k = 14;
     int l = 5;
-    int n_bit = 3;
+    int p = 10;
+    int n_bit = 4;
     char systemcall[500];
     size_t pos;
     Ciphertext x_hex, y_hex, z_hex, res, x_r, y_r;
@@ -1004,13 +1154,32 @@ int main(int argc, char *argv[])
     system("cd Server && mkdir Queries");
     system("cd Server/Queries && mkdir Client1Query");
 
-    SEALContext context = create_context(8192, 64);
+    SEALContext context = create_context(8192, 128);
     KeyGenerator keygen(context);
+    PublicKey public_key;
+    RelinKeys relin_keys;
+    SecretKey secret_key;
+    /*
     PublicKey public_key;
     keygen.create_public_key(public_key);
     RelinKeys relin_keys;
     keygen.create_relin_keys(relin_keys);
     SecretKey secret_key = keygen.secret_key();
+    Encryptor encryptor(context, public_key);
+    Evaluator evaluator(context);
+    Decryptor decryptor(context, secret_key);
+    */
+    fstream fs;
+    fs.open("DBpublic_key.txt", fstream::binary | fstream::in);
+	public_key.load(context,fs);
+	fs.close();
+	fs.open("DBprivate_key.txt", fstream::binary | fstream::in);
+	secret_key.load(context,fs);
+	fs.close();
+    fs.open("Relin_key.txt", fstream::binary | fstream::in);
+	relin_keys.load(context,fs);
+	fs.close();
+
     Encryptor encryptor(context, public_key);
     Evaluator evaluator(context);
     Decryptor decryptor(context, secret_key);
@@ -1025,11 +1194,14 @@ int main(int argc, char *argv[])
 
     enc_int_total(l, &encryptor, directoryl, n_bit);
 
+    enc_int_total(p, &encryptor, directoryp, n_bit);
+
     system("mv x Server/Queries/Client1Query");
     system("mv y Server/Queries/Client1Query");
     system("mv z Server/Queries/Client1Query");
     system("mv k Server/Queries/Client1Query");
     system("mv l Server/Queries/Client1Query");
+    system("mv p Server/Queries/Client1Query");
 
     string sql = "CREATE table col1 col2 ";
     fstream fb;
@@ -1078,7 +1250,22 @@ int main(int argc, char *argv[])
 
     query_exec(query, qpath, context, &evaluator, relin_keys);
 
-    sql = "SELECT SUM col2 FROM table WHERE col1 = l ";
+    sql = "INSERT table col1 col2 VALUES l y ";
+    fb.open(filepath, fstream::out);
+    fb << sql;
+    fb.close();
+
+    fb.open(filepath, fstream::in);
+    while (fb)
+    {
+        getline(fb, query);
+        cout << query << endl;
+    }
+    fb.close();
+
+    query_exec(query, qpath, context, &evaluator, relin_keys);
+
+    sql = "SELECT SUM col2 FROM table WHERE col1 > l ";
     fb.open(filepath, fstream::out);
     fb << sql;
     fb.close();

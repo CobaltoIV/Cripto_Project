@@ -1,6 +1,7 @@
 /mnt/c/Users/ricas/Documents/IST/5ºano/1sem/Cripto/Project/Git/Cripto_Project/Tests/CMakeFiles/rebuild_cache.dir
-/mnt/c/Users/ricas/Documents/IST/5ºano/1sem/Cripto/Project/Git/Cripto_Project/Tests/CMakeFiles/test.dir
 /mnt/c/Users/ricas/Documents/IST/5ºano/1sem/Cripto/Project/Git/Cripto_Project/Tests/CMakeFiles/edit_cache.dir
+/mnt/c/Users/ricas/Documents/IST/5ºano/1sem/Cripto/Project/Git/Cripto_Project/Tests/CMakeFiles/test.dir
+/mnt/c/Users/ricas/Documents/IST/5ºano/1sem/Cripto/Project/Git/Cripto_Project/Tests/CMakeFiles/hello.dir
 /mnt/c/Users/ricas/Documents/IST/5ºano/1sem/Cripto/Project/Git/Cripto_Project/Tests/CompFunc/CMakeFiles/rebuild_cache.dir
 /mnt/c/Users/ricas/Documents/IST/5ºano/1sem/Cripto/Project/Git/Cripto_Project/Tests/CompFunc/CMakeFiles/CompFunc.dir
 /mnt/c/Users/ricas/Documents/IST/5ºano/1sem/Cripto/Project/Git/Cripto_Project/Tests/CompFunc/CMakeFiles/edit_cache.dir

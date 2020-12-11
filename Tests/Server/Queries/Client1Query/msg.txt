@@ -1,1 +1,1 @@
-SELECT SUM col2 FROM table WHERE col1 = l 
+SELECT SUM col2 FROM table WHERE col1 > l 
