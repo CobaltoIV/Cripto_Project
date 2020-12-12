@@ -4,24 +4,75 @@
 #include <iomanip>
 #include <vector>
 #include <string>
-#include <chrono>
-#include <random>
-#include <thread>
-#include <mutex>
-#include <memory>
-#include <limits>
-#include <algorithm>
-#include <numeric>
+#include <stdio.h>
 #include <cstdlib>
 #include <cstring>
-#include <assert.h>
-#include <string.h>
 #include <dirent.h>
 #include "seal/seal.h"
 
 using namespace std;
 using namespace seal;
 
+/**
+ * @brief  Takes a condition from where and adds it into the condition vectors
+ * @note   
+ * @param  cond: Condition
+ * @param  p: Path to table
+ * @param  queriespath: Path to folder where the numbers to be compared are
+ * @param  cond_cols: Vector with paths to cols from previous conditions
+ * @param  cond_nums: Vector with paths to nums from previous conditions
+ * @param  mode: Vector with the types of previous conditions comparisons
+ * @retval None
+ */
+void process_cond(string cond, string p, string queriespath, vector<string>* cond_cols, vector<string>* cond_nums, vector<int>* mode)
+{
+    size_t pos;
+    stringstream ss;
+    string delimiter = " ";
+    string c1, col, comp, num, num_dir;
+
+    // Get collumn to be compared
+    pos = cond.find(delimiter);
+    c1 = cond.substr(0, pos);
+    cond.erase(0, pos + delimiter.length());
+
+    // Get collumn path
+    ss << p << "/" << c1;
+    col = ss.str();
+
+    // Add it to the vector
+    (*cond_cols).push_back(col);
+    ss.str(string());
+
+    // Get type of comparison
+    pos = cond.find(delimiter);
+    comp = cond.substr(0, pos);
+    cond.erase(0, pos + delimiter.length());
+
+    // Add the respctive mode to mode vector
+    if (comp.compare(">") == 0)
+    {
+        (*mode).push_back(0);
+    }
+    else if (comp.compare("=") == 0)
+    {
+        (*mode).push_back(1);
+    }
+    else if (comp.compare("<") == 0)
+    {
+        (*mode).push_back(2);
+    }
+
+    // Get number to be compared
+    pos = cond.find(delimiter);
+    num = cond.substr(0, pos);
+    cond.erase(0, pos + delimiter.length());
+
+    // Add it's path to the vector
+    ss << queriespath << "/" << num;
+    num_dir = ss.str();
+    (*cond_nums).push_back(num_dir);
+}
 /**
  * @brief  Saves homormophic encrypted
  * @note
