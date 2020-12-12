@@ -16,7 +16,9 @@
 #include <cstring>
 #include <assert.h>
 #include <string.h>
+#include <dirent.h>
 #include "seal/seal.h"
+#include <HelpFunc/HelpFunc.h>
 
 using namespace std;
 using namespace seal;
@@ -51,7 +53,193 @@ string exec(const char *cmd)
     return result;
 }
 
+void encryptValues(string values){
 
+    char filename[100];
+    char systemcall[500];
+    char directory[50];
+    string output = " ";
+
+    //Get DB public key and create encryptor
+    SEALContext context = create_context(8192, 128);
+    PublicKey public_key;
+    fstream keyfile;
+    sprintf(filename, "Clients/Client%d/DBpublic_key.txt", n_client);
+    keyfile.open(filename, fstream::binary | fstream::in);
+    public_key.load(context, keyfile);
+    keyfile.close();
+    Encryptor encryptor(context, public_key);
+
+    //Variables for value processing
+    string delimiter = " ";
+    size_t pos = 0;
+    string token;
+    int int_token;
+    int i = 1;
+
+    //Get every value and encrypt it 
+    while ((pos = values.find(delimiter)) != values.npos){
+
+        pos = values.find(delimiter);
+        token = values.substr(0, pos);
+        values.erase(0, pos + delimiter.length());
+        int_token = stoi(token);
+        sprintf(directory, "Value%d", i);
+        enc_int_total(int_token, &encryptor, directory);
+        sprintf(systemcall, "mv Value%d Client%dQuery", i, n_client);
+        system(systemcall);
+
+        output.append(directory);
+        output.append(" ");
+        i++;
+    }
+    
+    ofstream out;
+    out.open("msg.txt", ios::app);
+    out << output;
+    out.close();
+}
+
+int select_sum(string sql, string colname){
+    cout << "SUM" << endl;
+    return 0;
+}
+
+int select_query(string sql, string col1name){
+    cout << "query" << endl;
+    return 0;
+}
+
+int select_line(string sql){
+    cout << "line" << endl;
+    string delimiter = " ";
+    size_t pos = 0;
+    string output ="SELECT LINE";
+
+    //Get the line number 
+    pos = sql.find(delimiter);
+    string token = sql.substr(0, pos);
+    sql.erase(0, pos + delimiter.length());
+    //Exit if the program is unable to get the line number from the command 
+    if(sql.npos == pos || pos == 0){
+        return -1;
+    }
+    //Append the line number to the output string
+    output.append(" ");
+    output.append(token);
+
+
+    //Get the word FROM from the command
+    pos = sql.find(delimiter);
+    token = sql.substr(0, pos);
+    sql.erase(0, pos + delimiter.length());
+    //If the word isn't FROM, the program must return
+    if(token.compare("FROM") != 0){
+        return -1;
+    }
+    //Append FROM to the output string
+    output.append(" ");
+    output.append(token);
+
+    //Check if there's something written in the command other than the tablename
+    pos = sql.find(delimiter);
+    if(pos!= sql.npos){
+        return -1;
+    }
+
+    output.append(" ");
+    output.append(sql);
+    output.append(" ");
+
+    //Write output to file msg.txt
+    ofstream out("msg.txt");
+    out << output;
+    out.close();
+
+    return 0;
+}
+
+int select(string sql){
+    string delimiter = " ";
+    size_t pos = 0;
+    string colname;
+
+    //Get the second word of the SELECT command 
+    pos = sql.find(delimiter);
+    string token = sql.substr(0, pos);
+    sql.erase(0, pos + delimiter.length());
+
+    //Exit if the program is unable to get the second word from the command 
+    if(sql.npos == pos || pos == 0){
+        return -1;
+    }
+    
+    if(token.compare("LINE") == 0)
+    {   
+        return select_line(sql);
+    }
+
+    delimiter = ")";
+    if(pos = token.find(delimiter) != token.npos){  
+        colname = token.substr(4, (token.length()-5));
+        return select_sum(sql, colname);
+    }
+
+    delimiter = ",";  
+    if(token.find((delimiter))){
+        colname = token.substr(0, token.length()-1);
+        return select_query(sql, colname);
+    }
+    return -1;
+}
+
+int delete_row(string sql){
+    string delimiter = " ";
+    size_t pos = 0;
+    string output ="DELETE";
+
+    //Get the line number 
+    pos = sql.find(delimiter);
+    string token = sql.substr(0, pos);
+    sql.erase(0, pos + delimiter.length());
+    //Exit if the program is unable to get the line number from the command 
+    if(sql.npos == pos || pos == 0){
+        return -1;
+    }
+    //Append the line number to the output string
+    output.append(" ");
+    output.append(token);
+
+
+    //Get the word FROM from the command
+    pos = sql.find(delimiter);
+    token = sql.substr(0, pos);
+    sql.erase(0, pos + delimiter.length());
+    //If the word isn't FROM, the program must return
+    if(token.compare("FROM") != 0){
+        return -1;
+    }
+    //Append FROM to the output string
+    output.append(" ");
+    output.append(token);
+
+    //Check if there's something written in the command other than the tablename
+    pos = sql.find(delimiter);
+    if(pos!= sql.npos){
+        return -1;
+    }
+
+    output.append(" ");
+    output.append(sql);
+    output.append(" ");
+
+    //Write output to file msg.txt
+    ofstream out("msg.txt");
+    out << output;
+    out.close();
+
+    return 0;
+}
 
 int insert(string sql){
     string delimiter = " ";
@@ -59,6 +247,7 @@ int insert(string sql){
     int n_cols = 0, n_vals = 0;
     vector<string> colnames;
     string args;
+    string values;
 
     //Get the word INSERT from the command 
     pos = sql.find(delimiter);
@@ -70,7 +259,7 @@ int insert(string sql){
         return -1;
     }
 
-    string output = "INSERT INTO";
+    string output = "INSERT";
 
     //Get the tablename 
     pos = sql.find(delimiter);
@@ -198,8 +387,8 @@ int insert(string sql){
         }  
 
         //Append the value to the output string
-        output.append(" ");
-        output.append(token);
+        values.append(token);
+        values.append(" ");
         n_vals++;
 
         //Remove the current value from the input string 
@@ -211,8 +400,8 @@ int insert(string sql){
         return -1;
     } 
 
-    output.append(" ");
-    output.append(args);
+    values.append(args);
+    values.append(" ");
     n_vals++;
 
     if(n_vals != n_cols){
@@ -223,12 +412,10 @@ int insert(string sql){
     ofstream out("msg.txt");
     out << output;
     out.close();
+    encryptValues(values);
 
     return 0;
 }
-
-
-
 
 int create(string sql)
 {
@@ -245,7 +432,7 @@ int create(string sql)
     if(token.compare("TABLE") != 0){
         return -1;
     }
-    string output = "CREATE TABLE";
+    string output = "CREATE";
 
 
     //Get the tablename 
@@ -334,7 +521,7 @@ int create(string sql)
         return -1;
     }
 
-
+    output.append(" ");
     cout << output << endl;
 
     //Write output to file msg.txt
@@ -344,7 +531,6 @@ int create(string sql)
 
     return 0;
 }
-
 
 void handleQuery(string sql)
 {
@@ -368,7 +554,7 @@ void handleQuery(string sql)
         if(create(sql) == -1)
         {
             cerr << "Invalid command" << endl;
-            sprintf(systemcall, "rm Client%dQuery", n_client);
+            sprintf(systemcall, "rm -r Client%dQuery", n_client);
             system(systemcall);
             exit(1);
         }
@@ -379,7 +565,7 @@ void handleQuery(string sql)
         cout << "INSERT" << endl;
         if(insert(sql) == -1){
             cerr << "Invalid command" << endl;
-            sprintf(systemcall, "rm Client%dQuerry", n_client);
+            sprintf(systemcall, "rm -r Client%dQuery", n_client);
             system(systemcall);
             exit(1);
         }
@@ -389,11 +575,24 @@ void handleQuery(string sql)
     else if(token.compare("DELETE") == 0)
     {
         cout << "DELETE" << endl;
+        if(delete_row(sql) == -1){
+            cerr << "Invalid command" << endl;
+            sprintf(systemcall, "rm -r Client%dQuery", n_client);
+            system(systemcall);
+            exit(1);
+        }
     }
 
     else if(token.compare("SELECT") == 0)
     {
         cout << "SELECT" << endl;
+        if(select(sql) == -1){
+            cerr << "Invalid command" << endl;
+            sprintf(systemcall, "rm -r Client%dQuery", n_client);
+            system(systemcall);
+            exit(1);
+        }
+
     }
 
     else{
@@ -473,16 +672,61 @@ int main(int argc, char *argv[])
     cout << "Input Command:";
     //getline(cin,sql);
     sql = "INSERT INTO oi (1, 2) VALUES (2, 3)";
+    //sql = "DELETE 2 FROM table2";
 
+    //Create folder for the query
     sprintf(systemcall, "mkdir Client%dQuery", n_client);
     system(systemcall);
 
     handleQuery(sql);
 
-    
+    //Move message to the client folder 
     sprintf(systemcall, "mv msg.txt Clients/Client%d", n_client);
     system(systemcall);
 
+    cout << "end of handle query" << endl;
+    getline(cin, sql);
+
+    //Obtain server Public key and encrypt message
+    sprintf(systemcall, "cd Clients/Client%d && openssl x509 -pubkey -in server-cert.crt -out /tmp/serverpub.key ", n_client);
+    system(systemcall);
+    sprintf(systemcall, "cd Clients/Client%d && openssl rsautl -encrypt -pubin -inkey /tmp/serverpub.key -in msg.txt -out msg_enc.txt",n_client);
+	system(systemcall);
+
+    sprintf(systemcall, "mv Clients/Client%d/msg_enc.txt Client%dQuery", n_client, n_client);
+    system(systemcall);
+
+
+    //zip the query folder and move it to the client folder 
+    sprintf(systemcall, "zip -r -qq Client%dQuery.zip Client%dQuery && mv Client%dQuery.zip Clients/Client%d", n_client, n_client, n_client, n_client);
+    system(systemcall);
+
+    //Delete the original query folder 
+    sprintf(systemcall, "rm -r Client%dQuery", n_client);
+    system(systemcall);
+
+    //Sign zip with private key from client
+    sprintf(systemcall, "cd Clients/Client%d && openssl dgst -sha256 -sign c%dpk.key -out /tmp/sign.sha256 Client%dQuery.zip", n_client, n_client, n_client);
+    system(systemcall);
+    sprintf(systemcall, "cd Clients/Client%d && openssl base64 -in /tmp/sign.sha256 -out signed_digest%d.txt %s", n_client, n_client, cmdout);
+    system(systemcall);
+    
+    cout << "zip criado e assinado" << endl;
+    getline(cin, sql);
+
+    /*
+    cout << "pasta apagada" << endl;
+    getline(cin, sql);
+
+    //Unzip the query folder
+    sprintf(systemcall, "unzip Client%dQuery.zip", n_client);
+    system(systemcall);
+
+    cout << "pasta descomprimida" << endl;
+    getline(cin, sql);
+    */
+
+    /*
     // Obtain server Public key and encrypt message
     sprintf(systemcall, "cd Clients/Client%d && openssl x509 -pubkey -in server-cert.crt -out /tmp/serverpub.key ", n_client);
     system(systemcall);
@@ -498,9 +742,10 @@ int main(int argc, char *argv[])
     //Bundle query 
     sprintf(systemcall, "cd Clients/Client%d && mv msg_enc.txt signed_digest.txt ../../Client%dQuery", n_client, n_client);
     system(systemcall);
+    */
 
     //Send Query to server
-    sprintf(systemcall, "mv Client%dQuery Server/Queries", n_client);
+    sprintf(systemcall, " mv Clients/Client%d/Client%dQuery.zip Clients/Client%d/signed_digest%d.txt -t Server/Queries", n_client, n_client, n_client, n_client);
     system(systemcall);
 
 
