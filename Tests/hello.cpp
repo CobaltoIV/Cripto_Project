@@ -23,7 +23,7 @@ using namespace seal;
 
 int main()
 {
-    SEALContext context = create_context(8192, 128);
+    SEALContext context = create_context(8192, 32);
     KeyGenerator keygen(context);
     PublicKey public_key;
     keygen.create_public_key(public_key);

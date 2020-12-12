@@ -22,6 +22,8 @@
 using namespace std;
 using namespace seal;
 
+
+void process_cond(string cond, string p, string queriespath, vector<string>* cond_cols, vector<string>* cond_nums, vector<int>* mode);
 /**
  * @brief  
  * @note   

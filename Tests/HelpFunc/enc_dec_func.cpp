@@ -4,24 +4,61 @@
 #include <iomanip>
 #include <vector>
 #include <string>
-#include <chrono>
-#include <random>
-#include <thread>
-#include <mutex>
-#include <memory>
-#include <limits>
-#include <algorithm>
-#include <numeric>
 #include <cstdlib>
 #include <cstring>
-#include <assert.h>
-#include <string.h>
 #include <dirent.h>
 #include "seal/seal.h"
 
 using namespace std;
 using namespace seal;
 
+void process_cond(string cond, string p, string queriespath, vector<string>* cond_cols, vector<string>* cond_nums, vector<int>* mode)
+{
+    size_t pos;
+    stringstream ss;
+    string delimiter = " ";
+    string c1, col, comp, num, num_dir;
+
+    pos = cond.find(delimiter);
+    c1 = cond.substr(0, pos);
+    cond.erase(0, pos + delimiter.length());
+
+    cout << c1 << endl;
+    ss << p << "/" << c1;
+    col = ss.str();
+
+    (*cond_cols).push_back(col);
+    ss.str(string());
+
+    // get type of comparison
+    pos = cond.find(delimiter);
+    comp = cond.substr(0, pos);
+    cond.erase(0, pos + delimiter.length());
+
+    if (comp.compare(">") == 0)
+    {
+        (*mode).push_back(0);
+    }
+    else if (comp.compare("=") == 0)
+    {
+        (*mode).push_back(1);
+    }
+    else if (comp.compare("<") == 0)
+    {
+        (*mode).push_back(2);
+    }
+
+    // cout << mode << endl;
+    // get number to be compared
+    pos = cond.find(delimiter);
+    num = cond.substr(0, pos);
+    cond.erase(0, pos + delimiter.length());
+    cout << num << endl;
+
+    ss << queriespath << "/" << num;
+    num_dir = ss.str();
+    (*cond_nums).push_back(num_dir);
+}
 /**
  * @brief  Saves homormophic encrypted
  * @note
