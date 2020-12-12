@@ -1,1 +1,1 @@
-/usr/bin/c++ CMakeFiles/serverapi.dir/serverapi.cpp.o -o serverapi  /usr/local/lib/libseal-3.6.a -pthread 
+/usr/bin/c++ CMakeFiles/serverapi.dir/serverapi.cpp.o -o serverapi  /usr/local/lib/libseal-3.6.a CompFunc/libCompFunc.a HelpFunc/libHelpFunc.a /usr/local/lib/libseal-3.6.a /usr/local/lib/libseal-3.6.a -pthread 
