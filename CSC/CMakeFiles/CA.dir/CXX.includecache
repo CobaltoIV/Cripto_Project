@@ -6,7 +6,7 @@
 
 #IncludeRegexTransform: 
 
-/mnt/c/Users/ricas/Documents/IST/5ºano/1sem/Cripto/Project/CSC/CA.cpp
+/mnt/c/Users/ricas/Documents/IST/5ºano/1sem/Cripto/Project/Git/Cripto_Project/CSC/CA.cpp
 cstddef
 -
 iostream
@@ -44,7 +44,7 @@ assert.h
 string.h
 -
 seal/seal.h
-/mnt/c/Users/ricas/Documents/IST/5ºano/1sem/Cripto/Project/CSC/seal/seal.h
+/mnt/c/Users/ricas/Documents/IST/5ºano/1sem/Cripto/Project/Git/Cripto_Project/CSC/seal/seal.h
 
 /usr/local/include/SEAL-3.6/gsl/gsl_assert
 intrin.h

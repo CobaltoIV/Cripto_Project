@@ -52,12 +52,14 @@ int main(int argc, char *argv[])
 	size_t poly_modulus_degree = 8192;
 	parms.set_poly_modulus_degree(poly_modulus_degree);
 	parms.set_coeff_modulus(CoeffModulus::BFVDefault(poly_modulus_degree));
-	parms.set_plain_modulus(PlainModulus::Batching(poly_modulus_degree, 20));
+	parms.set_plain_modulus(128);
 	SEALContext context(parms);
 	KeyGenerator keygen(context);
 	PublicKey public_key;
     keygen.create_public_key(public_key);
 	SecretKey private_key = keygen.secret_key();
+	RelinKeys relin_keys;
+    keygen.create_relin_keys(relin_keys);
     //saving keys to txt files
     cout << "Creating SEAL keys\n"
 		 << endl;
@@ -66,6 +68,9 @@ int main(int argc, char *argv[])
 	fs.close();
 	fs.open("DBprivate_key.txt", fstream::binary | fstream::out);
 	private_key.save(fs);
+	fs.close();
+	fs.open("Relin_key.txt", fstream::binary | fstream::out);
+	relin_keys.save(fs);
 	fs.close();
 
 

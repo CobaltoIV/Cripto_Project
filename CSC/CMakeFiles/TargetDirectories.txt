@@ -1,5 +1,11 @@
-/mnt/c/Users/ricas/Documents/IST/5ºano/1sem/Cripto/Project/CSC/CMakeFiles/edit_cache.dir
-/mnt/c/Users/ricas/Documents/IST/5ºano/1sem/Cripto/Project/CSC/CMakeFiles/serverapi.dir
-/mnt/c/Users/ricas/Documents/IST/5ºano/1sem/Cripto/Project/CSC/CMakeFiles/CA.dir
-/mnt/c/Users/ricas/Documents/IST/5ºano/1sem/Cripto/Project/CSC/CMakeFiles/rebuild_cache.dir
-/mnt/c/Users/ricas/Documents/IST/5ºano/1sem/Cripto/Project/CSC/CMakeFiles/App.dir
+/mnt/c/Users/ricas/Documents/IST/5ºano/1sem/Cripto/Project/Git/Cripto_Project/CSC/CMakeFiles/edit_cache.dir
+/mnt/c/Users/ricas/Documents/IST/5ºano/1sem/Cripto/Project/Git/Cripto_Project/CSC/CMakeFiles/serverapi.dir
+/mnt/c/Users/ricas/Documents/IST/5ºano/1sem/Cripto/Project/Git/Cripto_Project/CSC/CMakeFiles/CA.dir
+/mnt/c/Users/ricas/Documents/IST/5ºano/1sem/Cripto/Project/Git/Cripto_Project/CSC/CMakeFiles/rebuild_cache.dir
+/mnt/c/Users/ricas/Documents/IST/5ºano/1sem/Cripto/Project/Git/Cripto_Project/CSC/CMakeFiles/App.dir
+/mnt/c/Users/ricas/Documents/IST/5ºano/1sem/Cripto/Project/Git/Cripto_Project/CSC/CompFunc/CMakeFiles/rebuild_cache.dir
+/mnt/c/Users/ricas/Documents/IST/5ºano/1sem/Cripto/Project/Git/Cripto_Project/CSC/CompFunc/CMakeFiles/CompFunc.dir
+/mnt/c/Users/ricas/Documents/IST/5ºano/1sem/Cripto/Project/Git/Cripto_Project/CSC/CompFunc/CMakeFiles/edit_cache.dir
+/mnt/c/Users/ricas/Documents/IST/5ºano/1sem/Cripto/Project/Git/Cripto_Project/CSC/HelpFunc/CMakeFiles/rebuild_cache.dir
+/mnt/c/Users/ricas/Documents/IST/5ºano/1sem/Cripto/Project/Git/Cripto_Project/CSC/HelpFunc/CMakeFiles/HelpFunc.dir
+/mnt/c/Users/ricas/Documents/IST/5ºano/1sem/Cripto/Project/Git/Cripto_Project/CSC/HelpFunc/CMakeFiles/edit_cache.dir

@@ -6,7 +6,7 @@
 
 #IncludeRegexTransform: 
 
-/mnt/c/Users/ricas/Documents/IST/5ºano/1sem/Cripto/Project/CSC/ClientApp.cpp
+/mnt/c/Users/ricas/Documents/IST/5ºano/1sem/Cripto/Project/Git/Cripto_Project/CSC/ClientApp.cpp
 cstddef
 -
 iostream
@@ -43,8 +43,12 @@ assert.h
 -
 string.h
 -
+dirent.h
+-
 seal/seal.h
-/mnt/c/Users/ricas/Documents/IST/5ºano/1sem/Cripto/Project/CSC/seal/seal.h
+/mnt/c/Users/ricas/Documents/IST/5ºano/1sem/Cripto/Project/Git/Cripto_Project/CSC/seal/seal.h
+HelpFunc/HelpFunc.h
+-
 
 /usr/local/include/SEAL-3.6/gsl/gsl_assert
 intrin.h
@@ -991,4 +995,46 @@ seal/util/defines.h
 /usr/local/include/SEAL-3.6/seal/seal/util/defines.h
 cstdint
 -
+
+HelpFunc/HelpFunc.h
+cstddef
+-
+iostream
+-
+fstream
+-
+iomanip
+-
+vector
+-
+string
+-
+chrono
+-
+random
+-
+thread
+-
+mutex
+-
+memory
+-
+limits
+-
+algorithm
+-
+numeric
+-
+cstdlib
+-
+cstring
+-
+assert.h
+-
+stdio.h
+-
+dirent.h
+-
+seal/seal.h
+HelpFunc/seal/seal.h
 

@@ -56,4 +56,5 @@ CMakeFiles/App.dir/ClientApp.cpp.o: /usr/local/include/SEAL-3.6/seal/util/uintco
 CMakeFiles/App.dir/ClientApp.cpp.o: /usr/local/include/SEAL-3.6/seal/util/ztools.h
 CMakeFiles/App.dir/ClientApp.cpp.o: /usr/local/include/SEAL-3.6/seal/valcheck.h
 CMakeFiles/App.dir/ClientApp.cpp.o: /usr/local/include/SEAL-3.6/seal/version.h
+CMakeFiles/App.dir/ClientApp.cpp.o: HelpFunc/HelpFunc.h
 
