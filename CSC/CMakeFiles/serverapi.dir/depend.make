@@ -56,4 +56,6 @@ CMakeFiles/serverapi.dir/serverapi.cpp.o: /usr/local/include/SEAL-3.6/seal/util/
 CMakeFiles/serverapi.dir/serverapi.cpp.o: /usr/local/include/SEAL-3.6/seal/util/ztools.h
 CMakeFiles/serverapi.dir/serverapi.cpp.o: /usr/local/include/SEAL-3.6/seal/valcheck.h
 CMakeFiles/serverapi.dir/serverapi.cpp.o: /usr/local/include/SEAL-3.6/seal/version.h
+CMakeFiles/serverapi.dir/serverapi.cpp.o: CompFunc/CompFunc.h
+CMakeFiles/serverapi.dir/serverapi.cpp.o: HelpFunc/HelpFunc.h
 
