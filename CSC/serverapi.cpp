@@ -16,6 +16,9 @@
 #include <cstring>
 #include <assert.h>
 #include <string.h>
+#include <dirent.h>
+#include <CompFunc/CompFunc.h>
+#include <HelpFunc/HelpFunc.h>
 #include "seal/seal.h"
 
 using namespace std;
@@ -1299,10 +1302,11 @@ string verifysgn(char *directory, char *filename, char *signedfile, char *author
 
     return exec(systemcall);
 }
+
 int main(int argc, char *argv[])
 {
     int clientcount = 0, i = 0;
-    string sql, line;
+    string sql, query;
     char cmdout[256] = "";
     char systemcall[512] = "";
     char directory[50] = "";
@@ -1326,32 +1330,63 @@ int main(int argc, char *argv[])
     sprintf(authority, "CAcert.crt");
     cout << verifysgn(directory, filename, signedfile, authority) << " - Client Public Key" << endl;
 
+    sprintf(directory, "Server");
+    sprintf(filename, "Relin_key.txt");
+    sprintf(signedfile, "Relin_key_signed.txt");
+    sprintf(authority, "CAcert.crt");
+    cout << verifysgn(directory, filename, signedfile, authority) << " - DB Relin Key" << endl;
+
     //Verify signature of message
     sprintf(directory, "Server");
-    sprintf(filename, "msg_enc.txt");
-    sprintf(signedfile, "signed_digest.txt");
+    sprintf(filename, "Queries/Client%dQuery.zip", i);
+    sprintf(signedfile, "Queries/signed_digest%d.txt", i);
     sprintf(authority, "c%d-cert.crt", i);
-    cout << verifysgn(directory, filename, signedfile, authority) << " - Message Signature Key" << endl;
+    cout << verifysgn(directory, filename, signedfile, authority) << " - Query zip Signature Key" << endl;
+
+    SEALContext context = create_context(8192, 128);
+
+    RelinKeys relin_keys;
+
+    fstream fs;
+    fs.open("Server/Relin_key.txt", fstream::binary | fstream::in);
+    relin_keys.load(context, fs);
+    fs.close();
+
+    Evaluator evaluator(context);
+    
+
+    sprintf(systemcall, "cd Server/Queries && unzip -qq Client%dQuery.zip", i);
+    system(systemcall);
 
     // Obtain server Public key and encrypt message
-    sprintf(systemcall, "cd Server && openssl rsautl -decrypt -inkey server_pk.key -in msg_enc.txt -out msg.txt");
+    sprintf(systemcall, "cd Server && openssl rsautl -decrypt -inkey server_pk.key -in Queries/Client%dQuery/msg_enc.txt -out Queries/Client%dQuery/msg.txt", i, i);
     system(systemcall);
     cout << "Message Decrypted" << endl;
 
-    //Delete encrypted version of the message and signature file
-    sprintf(systemcall, "cd Server && rm msg_enc.txt signed_digest.txt");
+    sprintf(systemcall, "cd Server/Queries && rm Client%dQuery.zip && rm signed_digest%d.txt && cd Client%dQuery && rm msg_enc.txt", i, i, i);
     system(systemcall);
 
+    stringstream ss;
+    ss << "Server/Queries/Client" << i << "Query";
+    string qpath = ss.str();
+    //cout << qpath << endl;
+    ss << "/" << "msg.txt";
+    string msgpath = ss.str();
+    //cout << msgpath << endl;
     ifstream msg;
 
-    msg.open("../Server/msg.txt");
+    msg.open(msgpath);
 
     while (msg)
     {
-        getline(msg, line);
-        cout << line << endl;
+        getline(msg, query);
     }
     msg.close();
+
+    query_exec(query, qpath, context, &evaluator, relin_keys);
+    
+    sprintf(systemcall, "rm -r Server/Queries/Client%dQuery", i);
+    system(systemcall);
 
     return 0;
 }

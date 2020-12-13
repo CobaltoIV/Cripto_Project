@@ -87,7 +87,7 @@ int main(int argc, char *argv[])
 
     cout << "Server created"<< endl;
 
-	system("cd Server && mkdir Queries");
+	system("cd Server && mkdir Queries && mkdir Result");
 
 	cout << "Server Queries created" << endl;
 
@@ -100,6 +100,7 @@ int main(int argc, char *argv[])
     cout << "Clients created"<< endl;
     system("mv DBpublic_key.txt Admin");
 	system("mv DBprivate_key.txt Admin");
+	system("mv Relin_key.txt Admin");
 
 	//Generate a root CA certificate and private key
 	cout << "Generating CA cert" << endl;
@@ -122,9 +123,15 @@ int main(int argc, char *argv[])
 	sprintf(systemcall, "openssl base64 -in /tmp/sign.sha256 -out Admin/DBprivate_key_signed.txt%s", cmdout);
 	system(systemcall);
 
+	cout << "Signing the database private key with the CA cert" << endl;
+	sprintf(systemcall, "openssl dgst -sha256 -sign Admin/CAprivate_key.key -out /tmp/sign.sha256 Admin/Relin_key.txt%s",cmdout);
+	system(systemcall);
+	sprintf(systemcall, "openssl base64 -in /tmp/sign.sha256 -out Admin/Relin_key_signed.txt%s", cmdout);
+	system(systemcall);
+
 	// generate server key pair
 	// installing the root CA cert
-	sprintf(systemcall, "cp Admin/CAcert.crt Server");
+	sprintf(systemcall, "cp Admin/CAcert.crt Admin/Relin_key.txt Admin/Relin_key_signed.txt Server");
 	system(systemcall);
 	cout<<"Generating Server Private Key and certificate request"<<endl;
 	sprintf(systemcall, "cd Server && openssl genrsa -out server_pk.key 1024%s && openssl req -new -key server_pk.key -out server-cert.csr -subj \"/C=PT/ST=Lisbon/L=Lisbon/O=Cripto/OU=CSC-Project/CN=Server\" %s", cmdout,cmdout);

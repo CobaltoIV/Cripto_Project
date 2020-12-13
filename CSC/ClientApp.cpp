@@ -711,8 +711,7 @@ int main(int argc, char *argv[])
     cout << verifysgn(directory, filename, signedfile, authority) << endl;
 
     cout << "Input Command:";
-    //getline(cin,sql);
-    sql = "INSERT INTO oi (1, 2) VALUES (2, 3)";
+    getline(cin,sql);
     //sql = "DELETE 2 FROM table2";
 
     //Create folder for the query
