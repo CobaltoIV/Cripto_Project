@@ -1015,8 +1015,9 @@ void select_exec(string query)
         char *coldir = &c[0];
         if (!chkdir(coldir))
         {
-            cout << "Collumn doesn't exist";
-            exit(1);
+            string err = "Collumn doesn't exist";
+            create_msg(err);
+            return;
         }
 
         sprintf(systemcall, "cp -r %s Server/Result/%s ", coldir, tablename);
