@@ -203,7 +203,7 @@ int h2d(string x)
     stream << "0x" << x;
     stream >> hex >> aux;
     long int result = strtol(aux.c_str(), NULL, 0);
-    cout << x << " ----> " << to_string(result) << endl;
+    //cout << x << " ----> " << to_string(result) << endl;
     return result;
 }
 

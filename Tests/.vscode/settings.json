@@ -54,6 +54,7 @@
         "xutility": "cpp",
         "xlocale": "cpp",
         "filesystem": "cpp",
-        "xiosbase": "cpp"
+        "xiosbase": "cpp",
+        "sstream": "cpp"
     }
 }
