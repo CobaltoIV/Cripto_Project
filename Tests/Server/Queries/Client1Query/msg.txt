@@ -1,1 +1,1 @@
-SELECT SUM col1 FROM table WHERE col1 > l 
+DELETE 1 FROM table 

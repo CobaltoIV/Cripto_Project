@@ -70,6 +70,7 @@ void deleteline(char *tabledir, string line)
             linepath = &fullpath[0];
             // Delete entry from collumn
             sprintf(systemcall, "rm -r %s", linepath);
+            system(systemcall);
             //Clear contents of previous
             fullpath.clear();
             ss.str(string());
