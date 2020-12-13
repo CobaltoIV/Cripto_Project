@@ -520,7 +520,7 @@ void selectline_exec(string query)
 
     ss.str(string());
 
-    string m = "SELECT LINE ";
+    string m = "SELECT ";
     create_msg(m);
 }
 
