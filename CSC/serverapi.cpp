@@ -520,7 +520,8 @@ void selectline_exec(string query)
 
     ss.str(string());
 
-    string m = "SELECT ";
+    ss << "SELECT " << table;
+    string m = ss.str();
     create_msg(m);
 }
 
@@ -602,7 +603,8 @@ void select_exec_where1(string query, string queriespath, SEALContext context, E
     // Execute comparisons in conditions and save them to be read in the Client side
     selectcollumn_where(cond_cols, mode, cond_nums, context, evaluator, relinks);
 
-    string m = "SELECT WHERE ";
+    ss << "SELECT WHERE " << table;
+    string m = ss.str();
     create_msg(m);
 }
 
@@ -690,7 +692,8 @@ void select_exec_where2(string query, string queriespath, SEALContext context, E
     // execute and save comparisons
     selectcollumn_where(cond_cols, mode, cond_nums, context, evaluator, relinks);
 
-    string m = "SELECT WHERE ";
+    ss << "SELECT WHERE " << table;
+    string m = ss.str();
     create_msg(m);
 }
 
@@ -1015,8 +1018,9 @@ void select_exec(string query)
         char *coldir = &c[0];
         if (!chkdir(coldir))
         {
-            cout << "Collumn doesn't exist";
-            exit(1);
+            string err = "Collumn doesn't exist";
+            create_msg(err);
+            return;
         }
 
         sprintf(systemcall, "cp -r %s Server/Result/%s ", coldir, tablename);
@@ -1025,7 +1029,8 @@ void select_exec(string query)
         ss.str(string());
     }
 
-    string m = "SELECT ";
+    ss << "SELECT " << table;
+    string m = ss.str();
     create_msg(m);
 }
 /**

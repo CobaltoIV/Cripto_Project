@@ -1,1 +1,1 @@
-SELECT LINE 
+SELECT WHERE table

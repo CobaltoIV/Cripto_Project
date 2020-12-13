@@ -1,1 +1,1 @@
-SELECT LINE 2 FROM table
+SELECT col1 col2 FROM table WHERE col1 > l 
