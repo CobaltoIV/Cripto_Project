@@ -149,7 +149,7 @@ int main(int argc, char *argv[])
 		sprintf(systemcall, "cd Clients && mkdir Client%d", i);
 		system(systemcall);
 
-		//installing the Dtabase Key Server and CA certificates
+		//installing the Database Key Server and CA certificates
 		sprintf(systemcall, "cp Admin/DBpublic_key.txt Admin/DBprivate_key.txt Server/server-cert.crt Admin/CAcert.crt Admin/DBprivate_key_signed.txt Admin/DBpublic_key_signed.txt Clients/Client%d", i);
 		system(systemcall);
 
