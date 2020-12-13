@@ -1,1 +1,1 @@
-DELETE 1 FROM table 
+SELECT LINE 2 FROM table
