@@ -29,12 +29,53 @@ using namespace seal;
  * @param  error_msg: error message
  * @retval None
  */
-void handle_error(string error_msg)
+void create_msg(string error_msg)
 {
     ofstream fb;
     fb.open("Server/Result/msg.txt");
     fb << error_msg;
     fb.close();
+}
+
+void deleteline(char *tabledir, string line)
+{
+    DIR *folder;
+    stringstream ss;
+    string fullpath;
+    char *linepath;
+    char systemcall[500];
+    struct dirent *entry;
+
+    // open table directory to iterate through entries
+    folder = opendir(tabledir);
+
+    if (folder == NULL)
+    {
+        perror("Unable to read directory");
+        exit(1);
+    }
+    while ((entry = readdir(folder)))
+    {
+        if (!strcmp(entry->d_name, ".") || !strcmp(entry->d_name, "..")) // ignore non important entries
+        {
+            // do nothing (straight logic)
+        }
+        else if (entry->d_type == DT_DIR) // if the entry is a folder(only folder inside table directory would be the collumn folder)
+        {
+            // open directory
+            cout << entry->d_name << endl; // collumn name
+            // Get fullpath for number in entry
+            ss << tabledir << "/" << entry->d_name << "/" << line;
+            fullpath = ss.str();
+            linepath = &fullpath[0];
+            // Delete entry from collumn
+            sprintf(systemcall, "rm -r %s", linepath);
+            //Clear contents of previous
+            fullpath.clear();
+            ss.str(string());
+        }
+    }
+    closedir(folder);
 }
 /**
  * @brief  It takes a column and sums every entry.
@@ -366,7 +407,7 @@ void select_exec_where1(string query, string queriespath, SEALContext context, E
     if (!chkdir(tabledir))
     {
         string err = "Table doesn't exist";
-        handle_error(err);
+        create_msg(err);
         return;
     }
 
@@ -388,7 +429,7 @@ void select_exec_where1(string query, string queriespath, SEALContext context, E
         if (!chkdir(coldir))
         {
             string err = "Collumn doesn't exist";
-            handle_error(err);
+            create_msg(err);
             return;
         }
 
@@ -402,6 +443,9 @@ void select_exec_where1(string query, string queriespath, SEALContext context, E
     process_cond(query, p, queriespath, &cond_cols, &cond_nums, &mode);
     // Execute comparisons in conditions and save them to be read in the Client side
     selectcollumn_where(cond_cols, mode, cond_nums, context, evaluator, relinks);
+
+    string m = "SELECT WHERE ";
+    create_msg(m);
 }
 
 /**
@@ -446,7 +490,7 @@ void select_exec_where2(string query, string queriespath, SEALContext context, E
     if (!chkdir(tabledir))
     {
         string err = "Table doesn't exist";
-        handle_error(err);
+        create_msg(err);
         return;
     }
 
@@ -487,6 +531,9 @@ void select_exec_where2(string query, string queriespath, SEALContext context, E
     process_cond(query, p, queriespath, &cond_cols, &cond_nums, &mode);
     // execute and save comparisons
     selectcollumn_where(cond_cols, mode, cond_nums, context, evaluator, relinks);
+
+    string m = "SELECT WHERE ";
+    create_msg(m);
 }
 
 void sumcolumn_where_debug(char *columndir, vector<string> cond_cols, vector<int> modes, vector<string> cond_nums, SEALContext context, Evaluator *evaluator, RelinKeys relinks, Decryptor *decryptor)
@@ -605,9 +652,10 @@ void sumcolumn_where_debug(char *columndir, vector<string> cond_cols, vector<int
  * @param  query: 
  * @retval None
  */
-void create_exec(string query)
+void create_exec(string query, int owner)
 {
-    string col, c, token;
+    string col, c, token, owner_file;
+    stringstream ss;
     string delimiter = " ";
     size_t pos;
     // Get tablename
@@ -622,9 +670,16 @@ void create_exec(string query)
     if (!createdir(dir))
     {
         string err = "Cannot create table";
-        handle_error(err);
+        create_msg(err);
         return;
     }
+    ss << p << "/"
+       << "owner.txt";
+    owner_file = ss.str();
+    ofstream fs;
+    fs.open(owner_file);
+    fs << owner;
+    fs.close();
     //Find the collumns
     while ((pos = query.find(delimiter)) != query.npos)
     {
@@ -643,10 +698,8 @@ void create_exec(string query)
         ss.str(string());
     }
     // Save sucess message
-    ofstream fb;
-    fb.open("Server/Result/msg.txt");
-    fb << "CREATE Sucessfull";
-    fb.close();
+    string m = "CREATE Sucessfull";
+    create_msg(m);
 }
 
 /**
@@ -679,7 +732,7 @@ void insert_exec(string query, string queriespath)
     if (!chkdir(tabledir))
     {
         string err = "Table doesn't exist";
-        handle_error(err);
+        create_msg(err);
         return;
     }
     // Get all collumns
@@ -746,10 +799,8 @@ void insert_exec(string query, string queriespath)
         system(systemcall);
     }
     // Send Sucess message
-    ofstream fb;
-    fb.open("Server/Result/msg.txt");
-    fb << "INSERT Sucessfull";
-    fb.close();
+    string m = "INSERT Sucessfull ";
+    create_msg(m);
 }
 
 /**
@@ -787,7 +838,7 @@ void select_exec(string query)
     if (!chkdir(tabledir))
     {
         string err = "Table doesn't exist";
-        handle_error(err);
+        create_msg(err);
         return;
     }
 
@@ -815,6 +866,9 @@ void select_exec(string query)
 
         ss.str(string());
     }
+
+    string m = "SELECT ";
+    create_msg(m);
 }
 /**
  * @brief  Process and execute SUM query without conditions
@@ -857,7 +911,7 @@ void sum_exec(string query, SEALContext context, Evaluator *evaluator, RelinKeys
     if (!chkdir(tabledir))
     {
         string err = "Table doesn't exist";
-        handle_error(err);
+        create_msg(err);
         return;
     }
 
@@ -868,13 +922,16 @@ void sum_exec(string query, SEALContext context, Evaluator *evaluator, RelinKeys
     if (!chkdir(coldir))
     {
         string err = "Collumn doesn't exist";
-        handle_error(err);
+        create_msg(err);
         return;
     }
     // Sum the collumn and save result into Server/Result/sum.res
     sumcolumn(coldir, context, evaluator, relinks);
 
     ss.str(string());
+
+    string m = "SUM ";
+    create_msg(m);
 }
 
 /**
@@ -924,7 +981,7 @@ void sum_exec_where1(string query, string queriespath, SEALContext context, Eval
     if (!chkdir(tabledir))
     {
         string err = "Table doesn't exist";
-        handle_error(err);
+        create_msg(err);
         return;
     }
     // Get directory of collumn
@@ -935,11 +992,14 @@ void sum_exec_where1(string query, string queriespath, SEALContext context, Eval
     if (!chkdir(coldir))
     {
         string err = "Collumn doesn't exist";
-        handle_error(err);
+        create_msg(err);
         return;
     }
     process_cond(query, p, queriespath, &cond_cols, &cond_nums, &mode);
     sumcolumn_where(coldir, cond_cols, mode, cond_nums, context, evaluator, relinks);
+
+    string m = "SUM ";
+    create_msg(m);
 }
 
 /**
@@ -989,7 +1049,7 @@ void sum_exec_where2(string query, string queriespath, SEALContext context, Eval
     if (!chkdir(tabledir))
     {
         string err = "Table doesn't exist";
-        handle_error(err);
+        create_msg(err);
         return;
     }
 
@@ -1003,7 +1063,7 @@ void sum_exec_where2(string query, string queriespath, SEALContext context, Eval
     if (!chkdir(coldir))
     {
         string err = "Collumn doesn't exist";
-        handle_error(err);
+        create_msg(err);
         return;
     }
     // get first condition into cond1
@@ -1016,6 +1076,9 @@ void sum_exec_where2(string query, string queriespath, SEALContext context, Eval
     process_cond(cond1, p, queriespath, &cond_cols, &cond_nums, &mode);
     process_cond(query, p, queriespath, &cond_cols, &cond_nums, &mode);
     sumcolumn_where(coldir, cond_cols, mode, cond_nums, context, evaluator, relinks);
+
+    string m = "SUM ";
+    create_msg(m);
 }
 
 void sum_exec_where1_debug(string query, string queriespath, size_t pos, SEALContext context, Evaluator *evaluator, RelinKeys relinks, Decryptor *decryptor)
@@ -1114,6 +1177,51 @@ void sum_exec_where1_debug(string query, string queriespath, size_t pos, SEALCon
     sumcolumn_where_debug(coldir, cond_cols, mode, cond_nums, context, evaluator, relinks, decryptor);
 }
 
+void delete_exec(string query)
+{
+    string coldelimiter = "FROM ";
+    string delimiter = " ";
+    string alllines, line, table;
+    stringstream ss;
+    size_t pos;
+    char systemcall[500];
+    char *tablename;
+    // Get all lines
+    pos = query.find(coldelimiter);
+    alllines = query.substr(0, pos);
+    query.erase(0, pos + coldelimiter.length());
+
+    // Get table name
+    pos = query.find(delimiter);
+    table = query.substr(0, pos);
+    query.erase(0, pos + delimiter.length());
+    tablename = &table[0];
+
+    string p = "Server/Database/";
+    p.append(table);
+    char *tabledir = &p[0];
+    if (!chkdir(tabledir))
+    {
+        string err = "Table doesn't exist";
+        create_msg(err);
+        return;
+    }
+
+    while ((pos = alllines.find(delimiter)) != alllines.npos)
+    {
+        //Get a column name from the input string
+        line = alllines.substr(0, pos);
+        //Remove the current column name from the input string
+        alllines.erase(0, pos + delimiter.length());
+        // Get directory of collumn
+
+        deleteline(tabledir, line);
+
+        ss.str(string());
+    }
+    string m = "DELETE Sucessfull";
+    create_msg(m);
+}
 /**
  * @brief  Process query and call respective routine for the type of query
  * @note   
@@ -1124,7 +1232,7 @@ void sum_exec_where1_debug(string query, string queriespath, size_t pos, SEALCon
  * @param  relinks: 
  * @retval None
  */
-void query_exec(string query, string queriespath, SEALContext context, Evaluator *evaluator, RelinKeys relinks)
+void query_exec(string query, string queriespath, SEALContext context, Evaluator *evaluator, RelinKeys relinks, int cid)
 {
     string delimiter = " ";
     string token;
@@ -1139,7 +1247,7 @@ void query_exec(string query, string queriespath, SEALContext context, Evaluator
 
     if (token.compare("CREATE") == 0)
     {
-        create_exec(query);
+        create_exec(query, cid);
     }
     else if (token.compare("INSERT") == 0)
     {
@@ -1184,9 +1292,13 @@ void query_exec(string query, string queriespath, SEALContext context, Evaluator
             select_exec(query);
         }
     }
+    else if (token.compare("DELETE") == 0)
+    {
+        delete_exec(query);
+    }
 }
 
-void query_exec_debug(string query, string queriespath, SEALContext context, Evaluator *evaluator, RelinKeys relinks, Decryptor *decryptor)
+void query_exec_debug(string query, string queriespath, SEALContext context, Evaluator *evaluator, RelinKeys relinks, Decryptor *decryptor, int i)
 {
     string delimiter = " ";
     string token;
@@ -1201,7 +1313,7 @@ void query_exec_debug(string query, string queriespath, SEALContext context, Eva
 
     if (token.compare("CREATE") == 0)
     {
-        create_exec(query);
+        create_exec(query, i);
     }
     else if (token.compare("INSERT") == 0)
     {
@@ -1249,6 +1361,10 @@ void query_exec_debug(string query, string queriespath, SEALContext context, Eva
         {
             select_exec(query);
         }
+    }
+    else if (token.compare("DELETE") == 0)
+    {
+        delete_exec(query);
     }
 }
 
@@ -1353,7 +1469,6 @@ int main(int argc, char *argv[])
     fs.close();
 
     Evaluator evaluator(context);
-    
 
     sprintf(systemcall, "cd Server/Queries && unzip -qq Client%dQuery.zip", i);
     system(systemcall);
@@ -1370,7 +1485,8 @@ int main(int argc, char *argv[])
     ss << "Server/Queries/Client" << i << "Query";
     string qpath = ss.str();
     //cout << qpath << endl;
-    ss << "/" << "msg.txt";
+    ss << "/"
+       << "msg.txt";
     string msgpath = ss.str();
     //cout << msgpath << endl;
     ifstream msg;
@@ -1383,10 +1499,31 @@ int main(int argc, char *argv[])
     }
     msg.close();
 
-    query_exec(query, qpath, context, &evaluator, relin_keys);
-    
-    sprintf(systemcall, "rm -r Server/Queries/Client%dQuery", i);
+    query_exec(query, qpath, context, &evaluator, relin_keys, i);
+
+    //Obtain server Public key and encrypt message
+    sprintf(systemcall, "cd Server && openssl x509 -pubkey -in c%d-cert.crt -out /tmp/c%dpub.key ", i, i);
     system(systemcall);
+    sprintf(systemcall, "cd Server/Result && openssl rsautl -encrypt -pubin -inkey /tmp/c%dpub.key -in msg.txt -out msg_enc.txt", i);
+    system(systemcall);
+
+    // Delete original message
+    system("rm Server/Result/msg.txt");
+
+    //zip the Result folder and move it to the client folder
+    sprintf(systemcall, "cd Server && zip -r -qq Result.zip Result");
+    system(systemcall);
+
+    // Sign the Result folder
+    sprintf(systemcall, "cd Server && openssl dgst -sha256 -sign server_pk.key -out /tmp/sign.sha256 Result.zip");
+    system(systemcall);
+    sprintf(systemcall, "cd Server && openssl base64 -in /tmp/sign.sha256 -out result_digest.txt %s", cmdout);
+    system(systemcall);
+
+    sprintf(systemcall, "cd Server && mv Result.zip result_digest.txt ../Clients/Client%d", i);
+    system(systemcall);
+    // Delete contents of Result waiting for next query
+    system("rm -r  Server/Result/* Server/Queries/*");
 
     return 0;
 }

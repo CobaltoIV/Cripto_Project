@@ -365,6 +365,7 @@ string getlinenumber(char *columndir)
         return to_string(temp);
     }
     closedir(folder);
+    return last_line;
 }
 
 void dec_int_total(Ciphertext *x_hex, vector<Ciphertext> *bin, char *directory, SEALContext context)
