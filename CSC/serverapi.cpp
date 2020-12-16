@@ -137,8 +137,8 @@ void deleteline(char *tabledir, string line)
 
     // Rename lines
     for (int i = 0; i < cols.size(); i++)
-    {   
-        l=1;
+    {
+        l = 1;
         c = cols[i];
         coldir = &c[0];
         folder = opendir(coldir);
@@ -162,7 +162,7 @@ void deleteline(char *tabledir, string line)
                 lnum = &linenum[0];
 
                 new_l = to_string(l);
-                newnum=  &new_l[0];
+                newnum = &new_l[0];
                 ss << c << "/" << new_l;
                 new_fullpath = ss.str();
                 new_linepath = &new_fullpath[0];
@@ -261,7 +261,7 @@ void sumcolumn(char *columndir, SEALContext context, Evaluator *evaluator, Relin
 }
 
 /**
- * @brief  Takes a collumn and a group of condictions. Sums the collumn according to the conditions
+ * @brief  Takes a collumn and a group of conditions. Sums the collumn according to the conditions
  * @note   Function is supposed to be called in SELECT SUM queries with where
  * @param  *columndir: Path to collumn
  * @param  cond_cols: vector with collumns in conditions
@@ -272,7 +272,7 @@ void sumcolumn(char *columndir, SEALContext context, Evaluator *evaluator, Relin
  * @param  relinks: 
  * @retval None
  */
-void sumcolumn_where(char *columndir, vector<string> cond_cols, vector<int> modes, vector<string> cond_nums, SEALContext context, Evaluator *evaluator, RelinKeys relinks)
+void sumcolumn_where(char *columndir, vector<string> cond_cols, vector<int> modes, vector<string> cond_nums, SEALContext context, Evaluator *evaluator, RelinKeys relinks, int comptype)
 {
     DIR *folder;
     stringstream ss;
@@ -326,9 +326,19 @@ void sumcolumn_where(char *columndir, vector<string> cond_cols, vector<int> mode
                     comp = output[modes[i]]; // If it's the first condition just don't need to multiply
                 else
                 {
+                    if (comptype = 0) // AND
+                    {
+                        comp = AND(comp, output[modes[i]], evaluator, relinks);
+                        /*
                     // Multiply with the result from the previous condition
                     (*evaluator).multiply_inplace(comp, output[modes[i]]);
                     (*evaluator).relinearize_inplace(comp, relinks);
+                    */
+                    }
+                    else // OR
+                    {
+                        comp = OR(comp, output[modes[i]], evaluator, relinks);
+                    }
                 }
                 // Clear for next condition
                 num_bin.clear();
@@ -389,7 +399,7 @@ void sumcolumn_where(char *columndir, vector<string> cond_cols, vector<int> mode
  * @param  relinks: 
  * @retval None
  */
-void selectcollumn_where(vector<string> cond_cols, vector<int> modes, vector<string> cond_nums, SEALContext context, Evaluator *evaluator, RelinKeys relinks)
+void selectcollumn_where(vector<string> cond_cols, vector<int> modes, vector<string> cond_nums, SEALContext context, Evaluator *evaluator, RelinKeys relinks, int comptype)
 {
     DIR *folder;
     stringstream ss;
@@ -450,11 +460,22 @@ void selectcollumn_where(vector<string> cond_cols, vector<int> modes, vector<str
                 output = full_homomorphic_comparator(col_bin, num_bin, evaluator, relinks);
 
                 if (i == 0)
-                    comp = output[modes[i]];
+                    comp = output[modes[i]]; // If it's the first condition just don't need to multiply
                 else
                 {
+                    if (comptype = 0) // AND
+                    {
+                        comp = AND(comp, output[modes[i]], evaluator, relinks);
+                        /*
+                    // Multiply with the result from the previous condition
                     (*evaluator).multiply_inplace(comp, output[modes[i]]);
                     (*evaluator).relinearize_inplace(comp, relinks);
+                    */
+                    }
+                    else // OR
+                    {
+                        comp = OR(comp, output[modes[i]], evaluator, relinks);
+                    }
                 }
                 num_bin.clear();
                 col_bin.clear();
@@ -601,7 +622,7 @@ void select_exec_where1(string query, string queriespath, SEALContext context, E
     // Process conditions in where
     process_cond(query, p, queriespath, &cond_cols, &cond_nums, &mode);
     // Execute comparisons in conditions and save them to be read in the Client side
-    selectcollumn_where(cond_cols, mode, cond_nums, context, evaluator, relinks);
+    selectcollumn_where(cond_cols, mode, cond_nums, context, evaluator, relinks, 0);
 
     ss << "SELECT WHERE " << table;
     string m = ss.str();
@@ -618,13 +639,21 @@ void select_exec_where1(string query, string queriespath, SEALContext context, E
  * @param  relinks: 
  * @retval None
  */
-void select_exec_where2(string query, string queriespath, SEALContext context, Evaluator *evaluator, RelinKeys relinks)
+void select_exec_where2(string query, string queriespath, SEALContext context, Evaluator *evaluator, RelinKeys relinks, int comptype)
 {
     string allcolls, c1, c, col, col2, c2, cond1, table, temp, cond, num, comp, num_dir, comp2, num2, num_dir2;
     string delimiter = " ";
     string coldelimiter = "FROM ";
     string tabdelimiter = " WHERE ";
-    string conddelimiter = "AND ";
+    string conddelimiter;
+    if (comptype == 0)
+    {
+        conddelimiter = "AND ";
+    }
+    else
+    {
+        conddelimiter = "OR ";
+    }
     vector<string> cols, cond_nums, cond_cols;
     vector<int> mode;
     size_t pos;
@@ -684,13 +713,14 @@ void select_exec_where2(string query, string queriespath, SEALContext context, E
     pos = query.find(conddelimiter);
     cond1 = query.substr(0, pos);
     query.erase(0, pos + conddelimiter.length());
-
+    //cout << cond1 << endl;
+    //cout << query << endl;
     // process first condition
     process_cond(cond1, p, queriespath, &cond_cols, &cond_nums, &mode);
     // process second condition
     process_cond(query, p, queriespath, &cond_cols, &cond_nums, &mode);
     // execute and save comparisons
-    selectcollumn_where(cond_cols, mode, cond_nums, context, evaluator, relinks);
+    selectcollumn_where(cond_cols, mode, cond_nums, context, evaluator, relinks, comptype);
 
     ss << "SELECT WHERE " << table;
     string m = ss.str();
@@ -1159,9 +1189,9 @@ void sum_exec_where1(string query, string queriespath, SEALContext context, Eval
         return;
     }
     process_cond(query, p, queriespath, &cond_cols, &cond_nums, &mode);
-    sumcolumn_where(coldir, cond_cols, mode, cond_nums, context, evaluator, relinks);
+    sumcolumn_where(coldir, cond_cols, mode, cond_nums, context, evaluator, relinks, 0);
 
-    string m = "SUM ";
+    string m = "SUM WHERE";
     create_msg(m);
 }
 
@@ -1175,13 +1205,21 @@ void sum_exec_where1(string query, string queriespath, SEALContext context, Eval
  * @param  relinks: 
  * @retval None
  */
-void sum_exec_where2(string query, string queriespath, SEALContext context, Evaluator *evaluator, RelinKeys relinks)
+void sum_exec_where2(string query, string queriespath, SEALContext context, Evaluator *evaluator, RelinKeys relinks, int comptype)
 {
     string c1, c2, c, col, col1, col2, table, temp, cond, num1, num2, comp1, comp2, num_dir1, num_dir2, cond1;
     string delimiter = " ";
     string coldelimiter = " FROM ";
     string tabdelimiter = " WHERE ";
-    string conddelimiter = "AND ";
+    string conddelimiter;
+    if (comptype == 0)
+    {
+        conddelimiter = "AND ";
+    }
+    else
+    {
+        conddelimiter = "OR ";
+    }
     vector<string> cond_nums, cond_cols;
     vector<int> mode;
     size_t pos;
@@ -1238,9 +1276,9 @@ void sum_exec_where2(string query, string queriespath, SEALContext context, Eval
 
     process_cond(cond1, p, queriespath, &cond_cols, &cond_nums, &mode);
     process_cond(query, p, queriespath, &cond_cols, &cond_nums, &mode);
-    sumcolumn_where(coldir, cond_cols, mode, cond_nums, context, evaluator, relinks);
+    sumcolumn_where(coldir, cond_cols, mode, cond_nums, context, evaluator, relinks, comptype);
 
-    string m = "SUM ";
+    string m = "SUM WHERE";
     create_msg(m);
 }
 
@@ -1403,6 +1441,8 @@ void query_exec(string query, string queriespath, SEALContext context, Evaluator
     string s2 = "AND";
     string s3 = "SUM";
     string s4 = "LINE";
+    string s5 = "OR";
+
 
     size_t pos = query.find(delimiter);
     token = query.substr(0, pos);
@@ -1428,7 +1468,11 @@ void query_exec(string query, string queriespath, SEALContext context, Evaluator
                 // if there is a second condition
                 if (query.find(s2) != std::string::npos)
                 {
-                    sum_exec_where2(query, queriespath, context, evaluator, relinks);
+                    sum_exec_where2(query, queriespath, context, evaluator, relinks, 0);
+                }
+                else if (query.find(s5) != std::string::npos)
+                {
+                    sum_exec_where2(query, queriespath, context, evaluator, relinks, 1);
                 }
                 else
                 {
@@ -1445,7 +1489,11 @@ void query_exec(string query, string queriespath, SEALContext context, Evaluator
             // if there is a second condition
             if (query.find(s2) != std::string::npos)
             {
-                select_exec_where2(query, queriespath, context, evaluator, relinks);
+                select_exec_where2(query, queriespath, context, evaluator, relinks, 0);
+            }
+            else if (query.find(s5) != std::string::npos)
+            {
+                select_exec_where2(query, queriespath, context, evaluator, relinks, 1);
             }
             else
             {
@@ -1455,76 +1503,6 @@ void query_exec(string query, string queriespath, SEALContext context, Evaluator
         else if (query.find(s4) != std::string::npos)
         {
             selectline_exec(query);
-        }
-        else // if there is no condition
-        {
-            select_exec(query);
-        }
-    }
-    else if (token.compare("DELETE") == 0)
-    {
-        delete_exec(query);
-    }
-}
-
-void query_exec_debug(string query, string queriespath, SEALContext context, Evaluator *evaluator, RelinKeys relinks, Decryptor *decryptor, int i)
-{
-    string delimiter = " ";
-    string token;
-    string s1 = "WHERE";
-    string s2 = "AND";
-    string s3 = "SUM";
-    size_t pos = query.find(delimiter);
-    token = query.substr(0, pos);
-    query.erase(0, pos + delimiter.length());
-
-    //cout << query << endl;
-
-    if (token.compare("CREATE") == 0)
-    {
-        create_exec(query, i);
-    }
-    else if (token.compare("INSERT") == 0)
-    {
-        insert_exec(query, queriespath);
-    }
-    else if (token.compare("SELECT") == 0)
-    {
-        // if it's a SUM
-        if (query.find(s3) != std::string::npos)
-        {
-            if (query.find(s1) != std::string::npos)
-            {
-                // if there is a second condition
-                if (query.find(s2) != std::string::npos)
-                {
-                    cout << "2 cond" << endl;
-                    //select_exec_where2()
-                }
-                else
-                {
-                    //cout << "1 cond" << endl;
-                    sum_exec_where1_debug(query, queriespath, pos, context, evaluator, relinks, decryptor);
-                }
-            }
-            else
-            {
-                sum_exec(query, context, evaluator, relinks);
-            }
-        }
-        else if (query.find(s1) != std::string::npos) // If there's a condition
-        {
-            // if there is a second condition
-            if (query.find(s2) != std::string::npos)
-            {
-                cout << "2 cond" << endl;
-                //select_exec_where2()
-            }
-            else
-            {
-                //cout << "1 cond" << endl;
-                //select_exec_where1();
-            }
         }
         else // if there is no condition
         {
@@ -1598,7 +1576,7 @@ int main(int argc, char *argv[])
     char filename[50] = "";
     char signedfile[50] = "";
     char authority[50] = "";
-
+    string verified = "Verified OK";
     //Handling input parameters
     for (int k = 0; k < argc; ++k)
     {
@@ -1613,21 +1591,40 @@ int main(int argc, char *argv[])
     sprintf(filename, "c%d-cert.crt", i);
     sprintf(signedfile, "c%d-cert_signed.txt", i);
     sprintf(authority, "CAcert.crt");
-    cout << verifysgn(directory, filename, signedfile, authority) << " - Client Public Key" << endl;
+    if(verifysgn(directory, filename, signedfile, authority).find(verified) != string::npos){
+        cout << verified << "Client Certificate" << endl;
+    }
+    else
+    {
+        cout << "Invalid Client Certificate signature" << endl;
+        exit(1);
+    }
 
     sprintf(directory, "Server");
     sprintf(filename, "Relin_key.txt");
     sprintf(signedfile, "Relin_key_signed.txt");
     sprintf(authority, "CAcert.crt");
-    cout << verifysgn(directory, filename, signedfile, authority) << " - DB Relin Key" << endl;
-
+    if(verifysgn(directory, filename, signedfile, authority).find(verified) != string::npos){
+        cout << verified << "DB Relin Key" << endl;
+    }
+    else
+    {
+        cout << "Invalid Relin Keys signature" << endl;
+        exit(1);
+    }
     //Verify signature of message
     sprintf(directory, "Server");
     sprintf(filename, "Queries/Client%dQuery.zip", i);
     sprintf(signedfile, "Queries/signed_digest%d.txt", i);
     sprintf(authority, "c%d-cert.crt", i);
-    cout << verifysgn(directory, filename, signedfile, authority) << " - Query zip Signature Key" << endl;
-
+    if(verifysgn(directory, filename, signedfile, authority).find(verified) != string::npos){
+        cout << verified << "Client Query" << endl;
+    }
+    else
+    {
+        cout << "Invalid Query signature" << endl;
+        exit(1);
+    }
     SEALContext context = create_context(8192, 128);
 
     RelinKeys relin_keys;

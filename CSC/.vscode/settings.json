@@ -2,6 +2,8 @@
     "files.associations": {
         "*.sql": "postgres",
         "*.cgi": "python",
-        "iostream": "cpp"
+        "*.h": "cpp",
+        "iostream": "cpp",
+        "string_view": "cpp"
     }
 }
