@@ -1592,7 +1592,7 @@ int main(int argc, char *argv[])
     sprintf(signedfile, "c%d-cert_signed.txt", i);
     sprintf(authority, "CAcert.crt");
     if(verifysgn(directory, filename, signedfile, authority).find(verified) != string::npos){
-        cout << verified << "Client Certificate" << endl;
+        cout << verified << ": Client Certificate" << endl;
     }
     else
     {
@@ -1605,7 +1605,7 @@ int main(int argc, char *argv[])
     sprintf(signedfile, "Relin_key_signed.txt");
     sprintf(authority, "CAcert.crt");
     if(verifysgn(directory, filename, signedfile, authority).find(verified) != string::npos){
-        cout << verified << "DB Relin Key" << endl;
+        cout << verified << ": DB Relin Key" << endl;
     }
     else
     {
@@ -1618,7 +1618,7 @@ int main(int argc, char *argv[])
     sprintf(signedfile, "Queries/signed_digest%d.txt", i);
     sprintf(authority, "c%d-cert.crt", i);
     if(verifysgn(directory, filename, signedfile, authority).find(verified) != string::npos){
-        cout << verified << "Client Query" << endl;
+        cout << verified << ": Client Query" << endl;
     }
     else
     {
