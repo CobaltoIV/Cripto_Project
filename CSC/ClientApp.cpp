@@ -973,6 +973,7 @@ int main(int argc, char *argv[])
     char filename[50] = "";
     char signedfile[50] = "";
     char authority[50] = "";
+    string verified = "Verified OK";
 
     //Handling input parameters
     for (int k = 0; k < argc; ++k)
@@ -987,25 +988,52 @@ int main(int argc, char *argv[])
     sprintf(filename, "c%dpk.key", n_client);
     sprintf(signedfile, "c%dpk_signed.txt", n_client);
     sprintf(authority, "CAcert.crt");
-    cout << verifysgn(directory, filename, signedfile, authority) << endl;
-
+    if(verifysgn(directory, filename, signedfile, authority).find(verified) != string::npos){
+        cout << verified << "Client Private Key" << endl;
+    }
+    else
+    {
+        cout << "Invalid Client Private Key signature" << endl;
+        exit(1);
+    }
     sprintf(directory, "Clients/Client%d", n_client);
     sprintf(filename, "c%d-cert.crt", n_client);
     sprintf(signedfile, "c%d-cert_signed.txt", n_client);
     sprintf(authority, "CAcert.crt");
-    cout << verifysgn(directory, filename, signedfile, authority) << endl;
+    if(verifysgn(directory, filename, signedfile, authority).find(verified) != string::npos){
+        cout << verified << "Client Certificate" << endl;
+    }
+    else
+    {
+        cout << "Invalid Client Certificate signature" << endl;
+        exit(1);
+    }
 
     sprintf(directory, "Clients/Client%d", n_client);
     sprintf(filename, "DBprivate_key.txt");
     sprintf(signedfile, "DBprivate_key_signed.txt");
     sprintf(authority, "CAcert.crt");
-    cout << verifysgn(directory, filename, signedfile, authority) << endl;
+    if(verifysgn(directory, filename, signedfile, authority).find(verified) != string::npos){
+        cout << verified << "DB Private Key" << endl;
+    }
+    else
+    {
+        cout << "Invalid DB Private Key signature" << endl;
+        exit(1);
+    }
 
     sprintf(directory, "Clients/Client%d", n_client);
     sprintf(filename, "DBpublic_key.txt");
     sprintf(signedfile, "DBpublic_key_signed.txt");
     sprintf(authority, "CAcert.crt");
-    cout << verifysgn(directory, filename, signedfile, authority) << endl;
+    if(verifysgn(directory, filename, signedfile, authority).find(verified) != string::npos){
+        cout << verified << "DB Public Key" << endl;
+    }
+    else
+    {
+        cout << "Invalid DB Public Key signature" << endl;
+        exit(1);
+    }
 
     //Loop to receive input commands
     while(1){
@@ -1061,7 +1089,7 @@ int main(int argc, char *argv[])
         system(systemcall);
 
         //Sign zip with private key from client
-        sprintf(systemcall, "cd Clients/Client%d && openssl dgst -sha256 -sign c%dpk.key -out /tmp/sign.sha256 Client%dQuery.zip", n_client, n_client, n_client);
+        sprintf(systemcall, "cd Clients/Client%d && openssl dgst -sha256 -sign c2pk.key -out /tmp/sign.sha256 Client%dQuery.zip",  n_client, n_client);
         system(systemcall);
         sprintf(systemcall, "cd Clients/Client%d && openssl base64 -in /tmp/sign.sha256 -out signed_digest%d.txt %s", n_client, n_client, cmdout);
         system(systemcall);
