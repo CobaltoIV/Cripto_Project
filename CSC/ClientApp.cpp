@@ -81,42 +81,254 @@ string verifysgn(char *directory, char *filename, char *signedfile, char *author
  * @param   
  * @retval 1 if the file exists, 0 if it doesn't
  */
-int fileExists(string filename, string directory){
+int fileExists(string filename, string directory)
+{
 
     ifstream file;
-    
+
     string file_path;
     file_path.append(directory);
     file_path.append(filename);
 
     file.open(file_path);
-    if(file){
+    if (file)
+    {
         return 1;
     }
-    else return 0;
+    else
+        return 0;
 }
 
-void handleResult(){
+void print_select_where(char *tabledir, char *compdir, SEALContext context, Decryptor *decryptor)
+{
+    DIR *folder;
+    stringstream ss;
+    string fullpath, c, linenum, cp, col, numpath, num;
+    vector<string> cols;
+    char *auxpath, *coldir, *n, *npath;
+    string help = "comp.res";
+    char *compfile = &help[0];
+    char systemcall[500];
+    Ciphertext comp, pos;
+    Plaintext result;
+    struct dirent *entry;
+    int l = 1;
+    int e;
+
+    // open table directory to iterate through entries
+    folder = opendir(tabledir);
+    cout << "line   ||  ";
+    if (folder == NULL)
+    {
+        perror("Unable to read directory");
+        exit(1);
+    }
+    while ((entry = readdir(folder)))
+    {
+        if (!strcmp(entry->d_name, ".") || !strcmp(entry->d_name, "..")) // ignore non important entries
+        {
+            // do nothing (straight logic)
+        }
+        else if (entry->d_type == DT_DIR) // if the entry is a folder(only folder inside table directory would be the collumn folder)
+        {
+            // open directory
+            //cout << entry->d_name << endl;
+            // Get collumn in vector
+            ss << tabledir << "/" << entry->d_name;
+            cols.push_back(ss.str());
+            ss.str(string());
+
+            cout << entry->d_name << "  ||  ";
+        }
+    }
+    closedir(folder);
+    cout << endl;
+    folder = opendir(compdir);
+
+    if (folder == NULL)
+    {
+        perror("Unable to read directory");
+        exit(1);
+    }
+    while ((entry = readdir(folder)))
+    {
+        if (!strcmp(entry->d_name, ".") || !strcmp(entry->d_name, "..")) // ignore non important entries
+        {
+            // do nothing (straight logic)
+        }
+        else if (entry->d_type == DT_DIR) // if the entry is a folder(only folder inside table directory would be the collumn folder)
+        {
+            // open directory
+            //cout << entry->d_name << endl;
+
+            ss << compdir << "/" << entry->d_name;
+            fullpath = ss.str();
+            auxpath = &fullpath[0];
+            ss.str(string());
+            comp = load_hom_enc(auxpath, compfile, context);
+
+            (*decryptor).decrypt(comp, result);
+            cp = result.to_string();
+            // if condition was respected
+            if (cp.compare("1") == 0)
+            {
+                cout << entry->d_name << "  ||  ";
+                for (int i = 0; i < cols.size(); i++)
+                {
+                    col = cols[i];
+                    //cout << col << endl;
+                    // Get path to line dir
+                    ss << col << "/" << entry->d_name;
+                    numpath = ss.str();
+                    npath = &numpath[0];
+                    //cout << npath << endl;
+                    ss.str(string());
+
+                    ss << entry->d_name << ".hex";
+                    num = ss.str();
+                    n = &num[0];
+
+                    pos = load_hom_enc(npath, n, context);
+                    (*decryptor).decrypt(pos, result);
+                    cout << h2d(result.to_string()) << "  ||  ";
+
+                    ss.str(string());
+                }
+                cout << endl;
+            }
+
+            ss.str(string());
+        }
+    }
+    closedir(folder);
+}
+
+void read_select_where(string msg, string result_path, SEALContext context, Decryptor *decryptor)
+{
+    string table, token, filepath, tablepath, comppath;
+    string delimiter = " ";
+    char *tabledir, *compdir;
+    size_t pos;
+    stringstream ss;
+
+    // Take SELECT off
+    pos = msg.find(delimiter);
+    token = msg.substr(0, pos);
+    msg.erase(0, pos + delimiter.length());
+
+    // Take WHERE off
+    pos = msg.find(delimiter);
+    token = msg.substr(0, pos);
+    msg.erase(0, pos + delimiter.length());
+
+    // Get table name
+    pos = msg.find(delimiter);
+    table = msg.substr(0, pos);
+    msg.erase(0, pos + delimiter.length());
+
+    // Generate path to table folder containing wanted collumns
+    ss << result_path << "/" << table;
+    tablepath = ss.str();
+    tabledir = &tablepath[0];
+    ss.str(string());
+    cout << tabledir << endl;
+    ss << result_path << "/Comp";
+    comppath = ss.str();
+    compdir = &comppath[0];
+
+    print_select_where(tabledir, compdir, context, decryptor);
+}
+
+void readResult(string msg, string result_path, SEALContext context, Decryptor *decryptor)
+{
+    string s1 = "WHERE";
+    string crt = "CREATE", ins = "INSERT", sel = "SELECT", del = "DELETE", sum = "SUM";
+    stringstream ss;
+
+    //cout << query << endl;
+
+    if (msg.find(crt) != string::npos)
+    {
+        cout << msg << endl;
+    }
+    else if (msg.find(ins) != string::npos)
+    {
+        cout << msg << endl;
+    }
+    else if (msg.find(del) != string::npos)
+    {
+        cout << msg << endl;
+    }
+    else if (msg.find(sum) != string::npos)
+    {
+        Ciphertext res;
+        Plaintext result;
+        char *dir = &result_path[0];
+        string file = "sum.res";
+        char *filename = &file[0];
+        res = load_hom_enc(dir, filename, context);
+        (*decryptor).decrypt(res, result);
+        cout << "SUM = " << h2d(result.to_string()) << endl;
+    }
+    else if (msg.find(sel) != string::npos)
+    {
+        // if it's SELECT with conditions
+        if (msg.find(s1) != string::npos)
+        {
+            read_select_where(msg, result_path, context, decryptor);
+        }
+        else
+        {
+            //read_select(msg, context, decryptor)
+        }
+    }
+}
+
+void read_select(string msg, SEALContext context, Decryptor *decryptor)
+{
+}
+void handleResult(SEALContext context, Decryptor *decryptor)
+{
     char systemcall[512] = "";
+    stringstream ss;
+    string filepath, msg, result_path;
 
     //Decrypt message using client's private key
     sprintf(systemcall, "cd Clients/Client%d && openssl rsautl -decrypt -inkey c%dpk.key -in Result/msg_enc.txt -out Result/msg.txt", n_client, n_client);
     system(systemcall);
 
-    
+    ss << "Clients/Client" << n_client << "/Result";
+    result_path = ss.str();
+    ss << "/msg.txt";
+    filepath = ss.str();
+    ss.str(string());
+
+    fstream fb;
+    fb.open(filepath, fstream::in);
+    while (fb)
+    {
+        getline(fb, msg);
+        //cout << msg << endl;
+    }
+    fb.close();
+    readResult(msg, result_path, context, decryptor);
 }
 
-void checkResult(){
+void checkResult(SEALContext context, Decryptor *decryptor)
+{
     char filename[50] = "";
     char directory[50] = "";
     char authority[50] = "";
     char signedfile[50] = "";
     char systemcall[512] = "";
-
+    stringstream ss;
+    string verified = "Verified OK";
+    string resultpath;
 
     sprintf(directory, "Clients/Client%d/", n_client);
-    //Return if there is no response from the server 
-    if(!fileExists("result_digest.txt", directory)){
+    //Return if there is no response from the server
+    if (!fileExists("result_digest.txt", directory))
+    {
         return;
     }
 
@@ -125,7 +337,18 @@ void checkResult(){
     sprintf(filename, "Result.zip");
     sprintf(signedfile, "result_digest.txt");
     sprintf(authority, "server-cert.crt");
-    cout << verifysgn(directory, filename, signedfile, authority) << " - Result signature" << endl;
+    if (verifysgn(directory, filename, signedfile, authority).find(verified) != string::npos)
+    {
+        cout << verified << "- Result" << endl;
+    }
+    else
+    {
+        cout << "Invalid Result signature" << endl;
+        //Delete In valid result folder
+        sprintf(systemcall, "cd Clients/Client%d && rm Result.zip && rm result_digest.txt", n_client);
+        system(systemcall);
+        return;
+    }
 
     //Unzip the Result folder
     sprintf(systemcall, "cd Clients/Client%d && unzip -qq Result.zip", n_client);
@@ -135,14 +358,11 @@ void checkResult(){
     sprintf(systemcall, "cd Clients/Client%d && rm Result.zip && rm result_digest.txt", n_client);
     system(systemcall);
 
-    handleResult();
+    handleResult(context, decryptor);
 
     //Delete the Result folder after checking it
-    //sprintf(systemcall, "rm -r Clients/Client%d/Result", n_client);
-    //system(systemcall);
-
-
-
+    sprintf(systemcall, "rm -r Clients/Client%d/Result", n_client);
+    system(systemcall);
 }
 
 void encryptValues(string values, int option)
@@ -171,7 +391,8 @@ void encryptValues(string values, int option)
     int int_token;
     int i = 1;
 
-    if(option != 0){
+    if (option != 0)
+    {
         int_token = stoi(values);
         sprintf(directory, "Value%d", option);
         enc_int_total(int_token, &encryptor, directory, n_bit);
@@ -180,7 +401,8 @@ void encryptValues(string values, int option)
         output.append(directory);
         output.append(" ");
     }
-    else{
+    else
+    {
         //Get every value and encrypt it
         while ((pos = values.find(delimiter)) != values.npos)
         {
@@ -213,12 +435,12 @@ int select_sum(string sql, string colname)
     string output = "SELECT SUM";
     sql.append(" ");
 
-    //Append the colname and the word FROM to the output string 
+    //Append the colname and the word FROM to the output string
     output.append(" ");
     output.append(colname);
     output.append(" FROM");
 
-    //Skip the word FROM in the input command 
+    //Skip the word FROM in the input command
     pos = sql.find(delimiter);
     string token = sql.substr(0, pos);
     sql.erase(0, pos + delimiter.length());
@@ -252,7 +474,8 @@ int select_sum(string sql, string colname)
     token = sql.substr(0, pos);
     sql.erase(0, pos + delimiter.length());
     //If there is no WHERE write message as it is
-    if(pos == sql.npos){
+    if (pos == sql.npos)
+    {
         return 0;
     }
     //If the second word isn't WHERE, the program must return
@@ -288,13 +511,15 @@ int select_sum(string sql, string colname)
     //Get the logical operator (AND or OR)
     pos = sql.find(delimiter);
     //Return if there is no logical operator
-    if(pos == sql.npos){
+    if (pos == sql.npos)
+    {
         return 0;
     }
     token = sql.substr(0, pos);
     sql.erase(0, pos + delimiter.length());
     //Return if the logical operator is neither AND or OR
-    if(token.compare("AND") != 0 && token.compare("OR") != 0){
+    if (token.compare("AND") != 0 && token.compare("OR") != 0)
+    {
         return -1;
     }
     output = "";
@@ -334,7 +559,7 @@ int select_query(string sql, string col1name)
     string output = "SELECT";
     string token = "";
 
-    //Get the colnames 
+    //Get the colnames
     pos = sql.find(delimiter);
     string colnames = sql.substr(0, pos);
     sql.erase(0, pos + delimiter.length());
@@ -345,8 +570,9 @@ int select_query(string sql, string col1name)
     }
 
     delimiter = ", ";
-    while((pos = colnames.find(delimiter)) != colnames.npos){
-        
+    while ((pos = colnames.find(delimiter)) != colnames.npos)
+    {
+
         //Get a column name from the colnames' string
         token = colnames.substr(0, pos);
 
@@ -365,7 +591,7 @@ int select_query(string sql, string col1name)
     output.append(" ");
     output.append(token);
 
-    //Append the word FROM to the output string 
+    //Append the word FROM to the output string
     output.append(" FROM ");
 
     //Get the tablename from the command
@@ -392,7 +618,8 @@ int select_query(string sql, string col1name)
     token = sql.substr(0, pos);
     sql.erase(0, pos + delimiter.length());
     //If there is no WHERE write message as it is
-    if(pos == sql.npos){
+    if (pos == sql.npos)
+    {
         return 0;
     }
     //If the second word isn't WHERE, the program must return
@@ -402,7 +629,7 @@ int select_query(string sql, string col1name)
     }
     output.append("WHERE ");
 
-//Get the first colname from the command
+    //Get the first colname from the command
     pos = sql.find(delimiter);
     token = sql.substr(0, pos);
     sql.erase(0, pos + delimiter.length());
@@ -428,13 +655,15 @@ int select_query(string sql, string col1name)
     //Get the logical operator (AND or OR)
     pos = sql.find(delimiter);
     //Return if there is no logical operator
-    if(pos == sql.npos){
+    if (pos == sql.npos)
+    {
         return 0;
     }
     token = sql.substr(0, pos);
     sql.erase(0, pos + delimiter.length());
     //Return if the logical operator is neither AND or OR
-    if(token.compare("AND") != 0 && token.compare("OR") != 0){
+    if (token.compare("AND") != 0 && token.compare("OR") != 0)
+    {
         return -1;
     }
     output = "";
@@ -988,7 +1217,8 @@ int main(int argc, char *argv[])
     sprintf(filename, "c%dpk.key", n_client);
     sprintf(signedfile, "c%dpk_signed.txt", n_client);
     sprintf(authority, "CAcert.crt");
-    if(verifysgn(directory, filename, signedfile, authority).find(verified) != string::npos){
+    if (verifysgn(directory, filename, signedfile, authority).find(verified) != string::npos)
+    {
         cout << verified << "Client Private Key" << endl;
     }
     else
@@ -1000,7 +1230,8 @@ int main(int argc, char *argv[])
     sprintf(filename, "c%d-cert.crt", n_client);
     sprintf(signedfile, "c%d-cert_signed.txt", n_client);
     sprintf(authority, "CAcert.crt");
-    if(verifysgn(directory, filename, signedfile, authority).find(verified) != string::npos){
+    if (verifysgn(directory, filename, signedfile, authority).find(verified) != string::npos)
+    {
         cout << verified << "Client Certificate" << endl;
     }
     else
@@ -1013,7 +1244,8 @@ int main(int argc, char *argv[])
     sprintf(filename, "DBprivate_key.txt");
     sprintf(signedfile, "DBprivate_key_signed.txt");
     sprintf(authority, "CAcert.crt");
-    if(verifysgn(directory, filename, signedfile, authority).find(verified) != string::npos){
+    if (verifysgn(directory, filename, signedfile, authority).find(verified) != string::npos)
+    {
         cout << verified << "DB Private Key" << endl;
     }
     else
@@ -1026,7 +1258,8 @@ int main(int argc, char *argv[])
     sprintf(filename, "DBpublic_key.txt");
     sprintf(signedfile, "DBpublic_key_signed.txt");
     sprintf(authority, "CAcert.crt");
-    if(verifysgn(directory, filename, signedfile, authority).find(verified) != string::npos){
+    if (verifysgn(directory, filename, signedfile, authority).find(verified) != string::npos)
+    {
         cout << verified << "DB Public Key" << endl;
     }
     else
@@ -1035,17 +1268,31 @@ int main(int argc, char *argv[])
         exit(1);
     }
 
+    SEALContext context = create_context(8192, 128);
+    PublicKey public_key;
+    SecretKey secret_key;
+    fstream keyfile;
+    sprintf(filename, "Clients/Client%d/DBpublic_key.txt", n_client);
+    keyfile.open(filename, fstream::binary | fstream::in);
+    public_key.load(context, keyfile);
+    keyfile.close();
+    sprintf(filename, "Clients/Client%d/DBprivate_key.txt", n_client);
+    keyfile.open(filename, fstream::binary | fstream::in);
+    secret_key.load(context, keyfile);
+    keyfile.close();
+    Encryptor encryptor(context, public_key);
+    Decryptor decryptor(context, secret_key);
     //Loop to receive input commands
-    while(1){
-
-        checkResult();
+    while (1)
+    {
 
         cout << "Input Command:";
         sql = "";
-        getline(cin,sql);
+        getline(cin, sql);
 
-        //break loop if exit is inserted 
-        if (sql.compare("exit") == 0){
+        //break loop if exit is inserted
+        if (sql.compare("exit") == 0)
+        {
             break;
         }
 
@@ -1057,7 +1304,8 @@ int main(int argc, char *argv[])
         system(systemcall);
 
         //Repeat loop if the command is invalid
-        if(handleQuery(sql) == -1){
+        if (handleQuery(sql) == -1)
+        {
             cerr << "Invalid command" << endl;
             sprintf(systemcall, "rm -r Client%dQuery", n_client);
             system(systemcall);
@@ -1089,7 +1337,7 @@ int main(int argc, char *argv[])
         system(systemcall);
 
         //Sign zip with private key from client
-        sprintf(systemcall, "cd Clients/Client%d && openssl dgst -sha256 -sign c2pk.key -out /tmp/sign.sha256 Client%dQuery.zip",  n_client, n_client);
+        sprintf(systemcall, "cd Clients/Client%d && openssl dgst -sha256 -sign c%dpk.key -out /tmp/sign.sha256 Client%dQuery.zip", n_client, n_client, n_client);
         system(systemcall);
         sprintf(systemcall, "cd Clients/Client%d && openssl base64 -in /tmp/sign.sha256 -out signed_digest%d.txt %s", n_client, n_client, cmdout);
         system(systemcall);
@@ -1139,6 +1387,8 @@ int main(int argc, char *argv[])
         getline(cin, sql);
         sprintf(systemcall, "./serverapi -cid %d", n_client);
         system(systemcall);
+
+        checkResult(context, &decryptor);
     }
 
     return 0;

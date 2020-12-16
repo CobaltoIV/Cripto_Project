@@ -261,7 +261,7 @@ void sumcolumn(char *columndir, SEALContext context, Evaluator *evaluator, Relin
 }
 
 /**
- * @brief  Takes a collumn and a group of condictions. Sums the collumn according to the conditions
+ * @brief  Takes a collumn and a group of conditions. Sums the collumn according to the conditions
  * @note   Function is supposed to be called in SELECT SUM queries with where
  * @param  *columndir: Path to collumn
  * @param  cond_cols: vector with collumns in conditions
@@ -1191,7 +1191,7 @@ void sum_exec_where1(string query, string queriespath, SEALContext context, Eval
     process_cond(query, p, queriespath, &cond_cols, &cond_nums, &mode);
     sumcolumn_where(coldir, cond_cols, mode, cond_nums, context, evaluator, relinks, 0);
 
-    string m = "SUM ";
+    string m = "SUM WHERE";
     create_msg(m);
 }
 
@@ -1278,7 +1278,7 @@ void sum_exec_where2(string query, string queriespath, SEALContext context, Eval
     process_cond(query, p, queriespath, &cond_cols, &cond_nums, &mode);
     sumcolumn_where(coldir, cond_cols, mode, cond_nums, context, evaluator, relinks, comptype);
 
-    string m = "SUM ";
+    string m = "SUM WHERE";
     create_msg(m);
 }
 
