@@ -1,9 +1,0 @@
-{
-    "files.associations": {
-        "*.sql": "postgres",
-        "*.cgi": "python",
-        "*.h": "cpp",
-        "iostream": "cpp",
-        "string_view": "cpp"
-    }
-}

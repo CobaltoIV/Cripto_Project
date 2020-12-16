@@ -556,8 +556,11 @@ int select_query(string sql, string col1name)
     cout << "query" << endl;
     size_t pos = 0;
     string delimiter = "FROM ";
-    string output = "SELECT";
+    string output = "SELECT ";
     string token = "";
+
+    //Append the 1st column's name 
+    output.append(col1name);
 
     //Get the colnames
     pos = sql.find(delimiter);
@@ -1192,6 +1195,17 @@ int handleQuery(string sql)
     }
 }
 
+void deleteResidues(){
+    char systemcall[512] = "";
+
+    sprintf(systemcall, "rm -r Client%dQuery 2>/dev/null", n_client);
+    system(systemcall);
+
+    sprintf(systemcall, "cd Clients/Client%d && rm msg.txt 2>/dev/null && rm signed_digest%d.txt 2>/dev/null && rm Client%dQuery.zip 2>/dev/null", n_client, n_client, n_client);
+    system(systemcall);
+
+}
+
 int main(int argc, char *argv[])
 {
     int clientcount = 0;
@@ -1219,7 +1233,7 @@ int main(int argc, char *argv[])
     sprintf(authority, "CAcert.crt");
     if (verifysgn(directory, filename, signedfile, authority).find(verified) != string::npos)
     {
-        cout << verified << "Client Private Key" << endl;
+        cout << verified << ": Client Private Key" << endl;
     }
     else
     {
@@ -1232,7 +1246,7 @@ int main(int argc, char *argv[])
     sprintf(authority, "CAcert.crt");
     if (verifysgn(directory, filename, signedfile, authority).find(verified) != string::npos)
     {
-        cout << verified << "Client Certificate" << endl;
+        cout << verified << ": Client Certificate" << endl;
     }
     else
     {
@@ -1246,7 +1260,7 @@ int main(int argc, char *argv[])
     sprintf(authority, "CAcert.crt");
     if (verifysgn(directory, filename, signedfile, authority).find(verified) != string::npos)
     {
-        cout << verified << "DB Private Key" << endl;
+        cout << verified << ": DB Private Key" << endl;
     }
     else
     {
@@ -1260,7 +1274,7 @@ int main(int argc, char *argv[])
     sprintf(authority, "CAcert.crt");
     if (verifysgn(directory, filename, signedfile, authority).find(verified) != string::npos)
     {
-        cout << verified << "DB Public Key" << endl;
+        cout << verified << ": DB Public Key" << endl;
     }
     else
     {
@@ -1282,6 +1296,10 @@ int main(int argc, char *argv[])
     keyfile.close();
     Encryptor encryptor(context, public_key);
     Decryptor decryptor(context, secret_key);
+
+    //deletes files on the client side that weren't deleted when the program was interrupted ("^C" aka "Ctrl + C")
+    deleteResidues();
+
     //Loop to receive input commands
     while (1)
     {

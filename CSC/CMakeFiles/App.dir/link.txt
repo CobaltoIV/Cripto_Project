@@ -1,1 +1,0 @@
-/usr/bin/c++ CMakeFiles/App.dir/ClientApp.cpp.o -o App  /usr/local/lib/libseal-3.6.a CompFunc/libCompFunc.a HelpFunc/libHelpFunc.a /usr/local/lib/libseal-3.6.a /usr/local/lib/libseal-3.6.a -pthread 

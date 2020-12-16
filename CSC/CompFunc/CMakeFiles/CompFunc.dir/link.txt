@@ -1,2 +1,0 @@
-/usr/bin/ar qc libCompFunc.a CMakeFiles/CompFunc.dir/comparator.cpp.o
-/usr/bin/ranlib libCompFunc.a
