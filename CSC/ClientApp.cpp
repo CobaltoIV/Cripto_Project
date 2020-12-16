@@ -53,7 +53,99 @@ string exec(const char *cmd)
     return result;
 }
 
-void encryptValues(string values)
+/**
+ * @brief  Verifies signature of a file according to an authority
+ * @note   
+ * @param  directory: Directory where the file is found
+ * @param  filename: Filename
+ * @param  signedfile: Filename signed by the authority through SHA256 digest function
+ * @param  authority: Authority which signed the file
+ * @retval boolean 
+ */
+
+string verifysgn(char *directory, char *filename, char *signedfile, char *authority)
+{
+    char systemcall[512] = "";
+    sprintf(systemcall, "cd %s && openssl base64 -d -in %s -out /tmp/sign.sha256", directory, signedfile);
+    system(systemcall);
+    sprintf(systemcall, "cd %s && openssl x509 -pubkey -in %s -out CApubkey.pem ", directory, authority);
+    system(systemcall);
+    sprintf(systemcall, "cd %s && openssl dgst -sha256 -verify CApubkey.pem -signature /tmp/sign.sha256 %s", directory, filename);
+
+    return exec(systemcall);
+}
+
+/**
+ * @brief  checks if a file exists
+ * @note   
+ * @param   
+ * @retval 1 if the file exists, 0 if it doesn't
+ */
+int fileExists(string filename, string directory){
+
+    ifstream file;
+    
+    string file_path;
+    file_path.append(directory);
+    file_path.append(filename);
+
+    file.open(file_path);
+    if(file){
+        return 1;
+    }
+    else return 0;
+}
+
+void handleResult(){
+    char systemcall[512] = "";
+
+    //Decrypt message using client's private key
+    sprintf(systemcall, "cd Clients/Client%d && openssl rsautl -decrypt -inkey c%dpk.key -in Result/msg_enc.txt -out Result/msg.txt", n_client, n_client);
+    system(systemcall);
+
+    
+}
+
+void checkResult(){
+    char filename[50] = "";
+    char directory[50] = "";
+    char authority[50] = "";
+    char signedfile[50] = "";
+    char systemcall[512] = "";
+
+
+    sprintf(directory, "Clients/Client%d/", n_client);
+    //Return if there is no response from the server 
+    if(!fileExists("result_digest.txt", directory)){
+        return;
+    }
+
+    //Verify the Result's signature
+    sprintf(directory, "Clients/Client%d", n_client);
+    sprintf(filename, "Result.zip");
+    sprintf(signedfile, "result_digest.txt");
+    sprintf(authority, "server-cert.crt");
+    cout << verifysgn(directory, filename, signedfile, authority) << " - Result signature" << endl;
+
+    //Unzip the Result folder
+    sprintf(systemcall, "cd Clients/Client%d && unzip -qq Result.zip", n_client);
+    system(systemcall);
+
+    //Delete the zip and its signature
+    sprintf(systemcall, "cd Clients/Client%d && rm Result.zip && rm result_digest.txt", n_client);
+    system(systemcall);
+
+    handleResult();
+
+    //Delete the Result folder after checking it
+    //sprintf(systemcall, "rm -r Clients/Client%d/Result", n_client);
+    //system(systemcall);
+
+
+
+}
+
+void encryptValues(string values, int option)
 {
 
     char filename[100];
@@ -79,22 +171,33 @@ void encryptValues(string values)
     int int_token;
     int i = 1;
 
-    //Get every value and encrypt it
-    while ((pos = values.find(delimiter)) != values.npos)
-    {
-
-        pos = values.find(delimiter);
-        token = values.substr(0, pos);
-        values.erase(0, pos + delimiter.length());
-        int_token = stoi(token);
-        sprintf(directory, "Value%d", i);
+    if(option != 0){
+        int_token = stoi(values);
+        sprintf(directory, "Value%d", option);
         enc_int_total(int_token, &encryptor, directory, n_bit);
-        sprintf(systemcall, "mv Value%d Client%dQuery", i, n_client);
+        sprintf(systemcall, "mv Value%d Client%dQuery", option, n_client);
         system(systemcall);
-
         output.append(directory);
         output.append(" ");
-        i++;
+    }
+    else{
+        //Get every value and encrypt it
+        while ((pos = values.find(delimiter)) != values.npos)
+        {
+
+            pos = values.find(delimiter);
+            token = values.substr(0, pos);
+            values.erase(0, pos + delimiter.length());
+            int_token = stoi(token);
+            sprintf(directory, "Value%d", i);
+            enc_int_total(int_token, &encryptor, directory, n_bit);
+            sprintf(systemcall, "mv Value%d Client%dQuery", i, n_client);
+            system(systemcall);
+
+            output.append(directory);
+            output.append(" ");
+            i++;
+        }
     }
 
     ofstream out;
@@ -105,19 +208,266 @@ void encryptValues(string values)
 
 int select_sum(string sql, string colname)
 {
-    cout << "SUM" << endl;
+    string delimiter = " ";
+    size_t pos = 0;
+    string output = "SELECT SUM";
+    sql.append(" ");
+
+    //Append the colname and the word FROM to the output string 
+    output.append(" ");
+    output.append(colname);
+    output.append(" FROM");
+
+    //Skip the word FROM in the input command 
+    pos = sql.find(delimiter);
+    string token = sql.substr(0, pos);
+    sql.erase(0, pos + delimiter.length());
+    //Exit if the program is unable to get the word FROM from the command
+    if (sql.npos == pos || pos == 0)
+    {
+        return -1;
+    }
+
+    //Get the tablename from the command
+    pos = sql.find(delimiter);
+    token = sql.substr(0, pos);
+    sql.erase(0, pos + delimiter.length());
+    //Exit if the program is unable to get the tablename from the command
+    if (sql.npos == pos || pos == 0)
+    {
+        return -1;
+    }
+    output.append(" ");
+    output.append(token);
+
+    output.append(" ");
+    //Write output to file msg.txt
+    ofstream out("msg.txt");
+    out << output;
+    out.close();
+    output = "";
+
+    //Get the word WHERE from the command
+    pos = sql.find(delimiter);
+    token = sql.substr(0, pos);
+    sql.erase(0, pos + delimiter.length());
+    //If there is no WHERE write message as it is
+    if(pos == sql.npos){
+        return 0;
+    }
+    //If the second word isn't WHERE, the program must return
+    if (token.compare("WHERE") != 0)
+    {
+        return -1;
+    }
+    output.append("WHERE ");
+
+    //Get the first colname from the command
+    pos = sql.find(delimiter);
+    token = sql.substr(0, pos);
+    sql.erase(0, pos + delimiter.length());
+    output.append(token);
+    output.append(" ");
+
+    //Get the first operator from the command
+    pos = sql.find(delimiter);
+    token = sql.substr(0, pos);
+    sql.erase(0, pos + delimiter.length());
+    //Write the message from WHERE until the first operator
+    output.append(token);
+    out.open("msg.txt", ios::app);
+    out << output;
+    out.close();
+
+    //Get the first value from the command
+    pos = sql.find(delimiter);
+    token = sql.substr(0, pos);
+    sql.erase(0, pos + delimiter.length());
+    encryptValues(token, 1);
+
+    //Get the logical operator (AND or OR)
+    pos = sql.find(delimiter);
+    //Return if there is no logical operator
+    if(pos == sql.npos){
+        return 0;
+    }
+    token = sql.substr(0, pos);
+    sql.erase(0, pos + delimiter.length());
+    //Return if the logical operator is neither AND or OR
+    if(token.compare("AND") != 0 && token.compare("OR") != 0){
+        return -1;
+    }
+    output = "";
+    output.append(token);
+    output.append(" ");
+
+    //Get the second colname from the command
+    pos = sql.find(delimiter);
+    token = sql.substr(0, pos);
+    sql.erase(0, pos + delimiter.length());
+    output.append(token);
+    output.append(" ");
+
+    //Get the second operator from the command
+    pos = sql.find(delimiter);
+    token = sql.substr(0, pos);
+    sql.erase(0, pos + delimiter.length());
+    output.append(token);
+    out.open("msg.txt", ios::app);
+    out << output;
+    out.close();
+
+    //Get the second value from the command
+    pos = sql.find(delimiter);
+    token = sql.substr(0, pos);
+    sql.erase(0, pos + delimiter.length());
+    encryptValues(token, 2);
+
     return 0;
 }
 
 int select_query(string sql, string col1name)
 {
     cout << "query" << endl;
+    size_t pos = 0;
+    string delimiter = "FROM ";
+    string output = "SELECT";
+    string token = "";
+
+    //Get the colnames 
+    pos = sql.find(delimiter);
+    string colnames = sql.substr(0, pos);
+    sql.erase(0, pos + delimiter.length());
+    //Exit if the program is unable to get the word FROM from the command
+    if (sql.npos == pos || pos == 0)
+    {
+        return -1;
+    }
+
+    delimiter = ", ";
+    while((pos = colnames.find(delimiter)) != colnames.npos){
+        
+        //Get a column name from the colnames' string
+        token = colnames.substr(0, pos);
+
+        //Append the column name to the output string
+        output.append(" ");
+        output.append(token);
+
+        //Remove the current column name from the input string
+        colnames.erase(0, pos + delimiter.length());
+    }
+
+    //Get the last colname
+    delimiter = " ";
+    pos = colnames.find(delimiter);
+    token = colnames.substr(0, pos);
+    output.append(" ");
+    output.append(token);
+
+    //Append the word FROM to the output string 
+    output.append(" FROM ");
+
+    //Get the tablename from the command
+    pos = sql.find(delimiter);
+    token = sql.substr(0, pos);
+    sql.erase(0, pos + delimiter.length());
+    //Exit if the program is unable to get the tablename from the command
+    if (sql.npos == pos || pos == 0)
+    {
+        return -1;
+    }
+    output.append(token);
+    output.append(" ");
+
+    //Write output to file msg.txt
+    ofstream out("msg.txt");
+    out << output;
+    out.close();
+
+    output = "";
+
+    //Get the word WHERE from the command
+    pos = sql.find(delimiter);
+    token = sql.substr(0, pos);
+    sql.erase(0, pos + delimiter.length());
+    //If there is no WHERE write message as it is
+    if(pos == sql.npos){
+        return 0;
+    }
+    //If the second word isn't WHERE, the program must return
+    if (token.compare("WHERE") != 0)
+    {
+        return -1;
+    }
+    output.append("WHERE ");
+
+//Get the first colname from the command
+    pos = sql.find(delimiter);
+    token = sql.substr(0, pos);
+    sql.erase(0, pos + delimiter.length());
+    output.append(token);
+    output.append(" ");
+
+    //Get the first operator from the command
+    pos = sql.find(delimiter);
+    token = sql.substr(0, pos);
+    sql.erase(0, pos + delimiter.length());
+    //Write the message from WHERE until the first operator
+    output.append(token);
+    out.open("msg.txt", ios::app);
+    out << output;
+    out.close();
+
+    //Get the first value from the command
+    pos = sql.find(delimiter);
+    token = sql.substr(0, pos);
+    sql.erase(0, pos + delimiter.length());
+    encryptValues(token, 1);
+
+    //Get the logical operator (AND or OR)
+    pos = sql.find(delimiter);
+    //Return if there is no logical operator
+    if(pos == sql.npos){
+        return 0;
+    }
+    token = sql.substr(0, pos);
+    sql.erase(0, pos + delimiter.length());
+    //Return if the logical operator is neither AND or OR
+    if(token.compare("AND") != 0 && token.compare("OR") != 0){
+        return -1;
+    }
+    output = "";
+    output.append(token);
+    output.append(" ");
+
+    //Get the second colname from the command
+    pos = sql.find(delimiter);
+    token = sql.substr(0, pos);
+    sql.erase(0, pos + delimiter.length());
+    output.append(token);
+    output.append(" ");
+
+    //Get the second operator from the command
+    pos = sql.find(delimiter);
+    token = sql.substr(0, pos);
+    sql.erase(0, pos + delimiter.length());
+    output.append(token);
+    out.open("msg.txt", ios::app);
+    out << output;
+    out.close();
+
+    //Get the second value from the command
+    pos = sql.find(delimiter);
+    token = sql.substr(0, pos);
+    sql.erase(0, pos + delimiter.length());
+    encryptValues(token, 2);
+
     return 0;
 }
 
 int select_line(string sql)
 {
-    cout << "line" << endl;
     string delimiter = " ";
     size_t pos = 0;
     string output = "SELECT LINE";
@@ -442,7 +792,7 @@ int insert(string sql)
     ofstream out("msg.txt");
     out << output;
     out.close();
-    encryptValues(values);
+    encryptValues(values, 0);
 
     return 0;
 }
@@ -561,7 +911,6 @@ int create(string sql)
     }
 
     output.append(" ");
-    cout << output << endl;
 
     //Write output to file msg.txt
     ofstream out("msg.txt");
@@ -571,7 +920,7 @@ int create(string sql)
     return 0;
 }
 
-void handleQuery(string sql)
+int handleQuery(string sql)
 {
     string delimiter = " ";
     size_t pos = 0;
@@ -585,87 +934,35 @@ void handleQuery(string sql)
     //Exit if the program is unable to get a word from the command
     if (sql.npos == pos || pos == 0)
     {
-        cerr << "Invalid command" << endl;
-        exit(1);
+        return -1;
     }
 
     if (token.compare("CREATE") == 0)
     {
-        if (create(sql) == -1)
-        {
-            cerr << "Invalid command" << endl;
-            sprintf(systemcall, "rm -r Client%dQuery", n_client);
-            system(systemcall);
-            exit(1);
-        }
+        return create(sql);
     }
 
     else if (token.compare("INSERT") == 0)
     {
-        cout << "INSERT" << endl;
-        if (insert(sql) == -1)
-        {
-            cerr << "Invalid command" << endl;
-            sprintf(systemcall, "rm -r Client%dQuery", n_client);
-            system(systemcall);
-            exit(1);
-        }
+        return insert(sql);
     }
 
     else if (token.compare("DELETE") == 0)
     {
-        cout << "DELETE" << endl;
-        if (delete_row(sql) == -1)
-        {
-            cerr << "Invalid command" << endl;
-            sprintf(systemcall, "rm -r Client%dQuery", n_client);
-            system(systemcall);
-            exit(1);
-        }
+        return delete_row(sql);
     }
 
     else if (token.compare("SELECT") == 0)
     {
-        cout << "SELECT" << endl;
-        if (select(sql) == -1)
-        {
-            cerr << "Invalid command" << endl;
-            sprintf(systemcall, "rm -r Client%dQuery", n_client);
-            system(systemcall);
-            exit(1);
-        }
+        return select(sql);
     }
 
     else
     {
-        cout << "Invalid command" << endl;
-        exit(1);
+        return -1;
     }
-
-    return;
 }
 
-/**
- * @brief  Verifies signature of a file according to an authority
- * @note   
- * @param  directory: Directory where the file is found
- * @param  filename: Filename
- * @param  signedfile: Filename signed by the authority through SHA256 digest function
- * @param  authority: Authority which signed the file
- * @retval boolean 
- */
-
-string verifysgn(char *directory, char *filename, char *signedfile, char *authority)
-{
-    char systemcall[512] = "";
-    sprintf(systemcall, "cd %s && openssl base64 -d -in %s -out /tmp/sign.sha256", directory, signedfile);
-    system(systemcall);
-    sprintf(systemcall, "cd %s && openssl x509 -pubkey -in %s -out CApubkey.pem ", directory, authority);
-    system(systemcall);
-    sprintf(systemcall, "cd %s && openssl dgst -sha256 -verify CApubkey.pem -signature /tmp/sign.sha256 %s", directory, filename);
-
-    return exec(systemcall);
-}
 int main(int argc, char *argv[])
 {
     int clientcount = 0;
@@ -710,90 +1007,111 @@ int main(int argc, char *argv[])
     sprintf(authority, "CAcert.crt");
     cout << verifysgn(directory, filename, signedfile, authority) << endl;
 
-    cout << "Input Command:";
-    getline(cin,sql);
-    //sql = "DELETE 2 FROM table2";
+    //Loop to receive input commands
+    while(1){
 
-    //Create folder for the query
-    sprintf(systemcall, "mkdir Client%dQuery", n_client);
-    system(systemcall);
+        checkResult();
 
-    handleQuery(sql);
+        cout << "Input Command:";
+        sql = "";
+        getline(cin,sql);
 
-    //Move message to the client folder
-    sprintf(systemcall, "mv msg.txt Clients/Client%d", n_client);
-    system(systemcall);
+        //break loop if exit is inserted 
+        if (sql.compare("exit") == 0){
+            break;
+        }
 
-    cout << "end of handle query" << endl;
-    getline(cin, sql);
+        //sql = "SELECT SUM(col) FROM table2";
+        //sql = "SELECT SUM(col) FROM table2 WHERE col1 < 1 AND col2 < 2";
 
-    //Obtain server Public key and encrypt message
-    sprintf(systemcall, "cd Clients/Client%d && openssl x509 -pubkey -in server-cert.crt -out /tmp/serverpub.key ", n_client);
-    system(systemcall);
-    sprintf(systemcall, "cd Clients/Client%d && openssl rsautl -encrypt -pubin -inkey /tmp/serverpub.key -in msg.txt -out msg_enc.txt", n_client);
-    system(systemcall);
+        //Create folder for the query
+        sprintf(systemcall, "mkdir Client%dQuery", n_client);
+        system(systemcall);
 
-    sprintf(systemcall, "mv Clients/Client%d/msg_enc.txt Client%dQuery", n_client, n_client);
-    system(systemcall);
+        //Repeat loop if the command is invalid
+        if(handleQuery(sql) == -1){
+            cerr << "Invalid command" << endl;
+            sprintf(systemcall, "rm -r Client%dQuery", n_client);
+            system(systemcall);
+            continue;
+        }
 
-    //zip the query folder and move it to the client folder
-    sprintf(systemcall, "zip -r -qq Client%dQuery.zip Client%dQuery && mv Client%dQuery.zip Clients/Client%d", n_client, n_client, n_client, n_client);
-    system(systemcall);
+        //Move message to the client folder
+        sprintf(systemcall, "mv msg.txt Clients/Client%d", n_client);
+        system(systemcall);
 
-    //Delete the original query folder
-    sprintf(systemcall, "rm -r Client%dQuery", n_client);
-    system(systemcall);
+        cout << "end of handle query" << endl;
+        getline(cin, sql);
 
-    //Sign zip with private key from client
-    sprintf(systemcall, "cd Clients/Client%d && openssl dgst -sha256 -sign c%dpk.key -out /tmp/sign.sha256 Client%dQuery.zip", n_client, n_client, n_client);
-    system(systemcall);
-    sprintf(systemcall, "cd Clients/Client%d && openssl base64 -in /tmp/sign.sha256 -out signed_digest%d.txt %s", n_client, n_client, cmdout);
-    system(systemcall);
+        //Obtain server Public key and encrypt message
+        sprintf(systemcall, "cd Clients/Client%d && openssl x509 -pubkey -in server-cert.crt -out /tmp/serverpub.key ", n_client);
+        system(systemcall);
+        sprintf(systemcall, "cd Clients/Client%d && openssl rsautl -encrypt -pubin -inkey /tmp/serverpub.key -in msg.txt -out msg_enc.txt", n_client);
+        system(systemcall);
 
-    cout << "zip criado e assinado" << endl;
-    getline(cin, sql);
+        sprintf(systemcall, "mv Clients/Client%d/msg_enc.txt Client%dQuery", n_client, n_client);
+        system(systemcall);
 
-    /*
-    cout << "pasta apagada" << endl;
-    getline(cin, sql);
+        //zip the query folder and move it to the client folder
+        sprintf(systemcall, "zip -r -qq Client%dQuery.zip Client%dQuery && mv Client%dQuery.zip Clients/Client%d", n_client, n_client, n_client, n_client);
+        system(systemcall);
 
-    //Unzip the query folder
-    sprintf(systemcall, "unzip Client%dQuery.zip", n_client);
-    system(systemcall);
+        //Delete the original query folder
+        sprintf(systemcall, "rm -r Client%dQuery", n_client);
+        system(systemcall);
 
-    cout << "pasta descomprimida" << endl;
-    getline(cin, sql);
-    */
+        //Sign zip with private key from client
+        sprintf(systemcall, "cd Clients/Client%d && openssl dgst -sha256 -sign c%dpk.key -out /tmp/sign.sha256 Client%dQuery.zip", n_client, n_client, n_client);
+        system(systemcall);
+        sprintf(systemcall, "cd Clients/Client%d && openssl base64 -in /tmp/sign.sha256 -out signed_digest%d.txt %s", n_client, n_client, cmdout);
+        system(systemcall);
 
-    /*
-    // Obtain server Public key and encrypt message
-    sprintf(systemcall, "cd Clients/Client%d && openssl x509 -pubkey -in server-cert.crt -out /tmp/serverpub.key ", n_client);
-    system(systemcall);
-    sprintf(systemcall, "cd Clients/Client%d && openssl rsautl -encrypt -pubin -inkey /tmp/serverpub.key -in msg.txt -out msg_enc.txt",n_client);
-	system(systemcall);
+        cout << "zip criado e assinado" << endl;
+        getline(cin, sql);
 
-    //Sign message with private key from client
-    sprintf(systemcall, "cd Clients/Client%d && openssl dgst -sha256 -sign c%dpk.key -out /tmp/sign.sha256 msg_enc.txt", n_client,n_client);
-    system(systemcall);
-    sprintf(systemcall, "cd Clients/Client%d && openssl base64 -in /tmp/sign.sha256 -out signed_digest.txt %s", n_client,cmdout);
-    system(systemcall);
+        /*
+        cout << "pasta apagada" << endl;
+        getline(cin, sql);
 
-    //Bundle query 
-    sprintf(systemcall, "cd Clients/Client%d && mv msg_enc.txt signed_digest.txt ../../Client%dQuery", n_client, n_client);
-    system(systemcall);
-    */
+        //Unzip the query folder
+        sprintf(systemcall, "unzip Client%dQuery.zip", n_client);
+        system(systemcall);
 
-    //Send Query to server
-    sprintf(systemcall, " mv Clients/Client%d/Client%dQuery.zip Clients/Client%d/signed_digest%d.txt -t Server/Queries", n_client, n_client, n_client, n_client);
-    system(systemcall);
+        cout << "pasta descomprimida" << endl;
+        getline(cin, sql);
+        */
 
-    //Delete non encrypted version of the message in the client folder
-    sprintf(systemcall, "cd Clients/Client%d && rm msg.txt", n_client);
-    system(systemcall);
+        /*
+        // Obtain server Public key and encrypt message
+        sprintf(systemcall, "cd Clients/Client%d && openssl x509 -pubkey -in server-cert.crt -out /tmp/serverpub.key ", n_client);
+        system(systemcall);
+        sprintf(systemcall, "cd Clients/Client%d && openssl rsautl -encrypt -pubin -inkey /tmp/serverpub.key -in msg.txt -out msg_enc.txt",n_client);
+        system(systemcall);
 
-    cout << "end of client api" << endl;
-    getline(cin, sql);
-    sprintf(systemcall, "./serverapi -cid %d", n_client);
-    system(systemcall);
+        //Sign message with private key from client
+        sprintf(systemcall, "cd Clients/Client%d && openssl dgst -sha256 -sign c%dpk.key -out /tmp/sign.sha256 msg_enc.txt", n_client,n_client);
+        system(systemcall);
+        sprintf(systemcall, "cd Clients/Client%d && openssl base64 -in /tmp/sign.sha256 -out signed_digest.txt %s", n_client,cmdout);
+        system(systemcall);
+
+        //Bundle query 
+        sprintf(systemcall, "cd Clients/Client%d && mv msg_enc.txt signed_digest.txt ../../Client%dQuery", n_client, n_client);
+        system(systemcall);
+        */
+
+        //Send Query to server
+        sprintf(systemcall, " mv Clients/Client%d/Client%dQuery.zip Clients/Client%d/signed_digest%d.txt -t Server/Queries", n_client, n_client, n_client, n_client);
+        system(systemcall);
+
+        //Delete non encrypted version of the message in the client folder
+        sprintf(systemcall, "cd Clients/Client%d && rm msg.txt", n_client);
+        system(systemcall);
+
+        cout << "end of client api" << endl;
+        getline(cin, sql);
+        sprintf(systemcall, "./serverapi -cid %d", n_client);
+        system(systemcall);
+    }
+
     return 0;
 }
