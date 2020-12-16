@@ -203,6 +203,97 @@ void print_select_where(char *tabledir, char *compdir, SEALContext context, Decr
     closedir(folder);
 }
 
+void print_select(char *tabledir, SEALContext context, Decryptor *decryptor)
+{
+    DIR *folder;
+    stringstream ss;
+    string fullpath, c, linenum, cp, col, numpath, num;
+    vector<string> cols;
+    char *auxpath, *coldir, *n, *npath;
+    string help = "comp.res";
+    char *compfile = &help[0];
+    char systemcall[500];
+    Ciphertext pos;
+    Plaintext result;
+    struct dirent *entry;
+    int l = 1;
+    int e;
+
+    // open table directory to iterate through entries
+    folder = opendir(tabledir);
+    cout << "line   ||  ";
+    if (folder == NULL)
+    {
+        perror("Unable to read directory");
+        exit(1);
+    }
+    while ((entry = readdir(folder)))
+    {
+        if (!strcmp(entry->d_name, ".") || !strcmp(entry->d_name, "..")) // ignore non important entries
+        {
+            // do nothing (straight logic)
+        }
+        else if (entry->d_type == DT_DIR) // if the entry is a folder(only folder inside table directory would be the collumn folder)
+        {
+            // open directory
+            //cout << entry->d_name << endl;
+            // Get collumn in vector
+            ss << tabledir << "/" << entry->d_name;
+            cols.push_back(ss.str());
+            ss.str(string());
+
+            cout << entry->d_name << "  ||  ";
+        }
+    }
+    closedir(folder);
+    cout << endl;
+    
+    if (folder == NULL)
+    {
+        perror("Unable to read directory");
+        exit(1);
+    }
+    while ((entry = readdir(folder)))
+    {
+        if (!strcmp(entry->d_name, ".") || !strcmp(entry->d_name, "..")) // ignore non important entries
+        {
+            // do nothing (straight logic)
+        }
+        else if (entry->d_type == DT_DIR) // if the entry is a folder(only folder inside table directory would be the collumn folder)
+        {
+            // open directory
+            //cout << entry->d_name << endl;
+
+            cout << entry->d_name << "  ||  ";
+            for (int i = 0; i < cols.size(); i++)
+            {
+                col = cols[i];
+                //cout << col << endl;
+                // Get path to line dir
+                ss << col << "/" << entry->d_name;
+                numpath = ss.str();
+                npath = &numpath[0];
+                //cout << npath << endl;
+                ss.str(string());
+
+                ss << entry->d_name << ".hex";
+                num = ss.str();
+                n = &num[0];
+
+                pos = load_hom_enc(npath, n, context);
+                (*decryptor).decrypt(pos, result);
+                cout << h2d(result.to_string()) << "  ||  ";
+
+                ss.str(string());
+            }
+            cout << endl;
+
+            ss.str(string());
+        }
+    }
+    closedir(folder);
+}
+
 void read_select_where(string msg, string result_path, SEALContext context, Decryptor *decryptor)
 {
     string table, token, filepath, tablepath, comppath;
@@ -237,6 +328,34 @@ void read_select_where(string msg, string result_path, SEALContext context, Decr
     compdir = &comppath[0];
 
     print_select_where(tabledir, compdir, context, decryptor);
+}
+
+void read_select(string msg, string result_path, SEALContext context, Decryptor *decryptor)
+{
+    string table, token, filepath, tablepath;
+    string delimiter = " ";
+    char *tabledir;
+    size_t pos;
+    stringstream ss;
+
+    // Take SELECT off
+    pos = msg.find(delimiter);
+    token = msg.substr(0, pos);
+    msg.erase(0, pos + delimiter.length());
+
+    // Get table name
+    pos = msg.find(delimiter);
+    table = msg.substr(0, pos);
+    msg.erase(0, pos + delimiter.length());
+
+    // Generate path to table folder containing wanted collumns
+    ss << result_path << "/" << table;
+    tablepath = ss.str();
+    tabledir = &tablepath[0];
+    ss.str(string());
+    cout << tabledir << endl;
+
+    print_select(tabledir, context, decryptor);
 }
 
 void readResult(string msg, string result_path, SEALContext context, Decryptor *decryptor)
@@ -284,9 +403,6 @@ void readResult(string msg, string result_path, SEALContext context, Decryptor *
     }
 }
 
-void read_select(string msg, SEALContext context, Decryptor *decryptor)
-{
-}
 void handleResult(SEALContext context, Decryptor *decryptor)
 {
     char systemcall[512] = "";
@@ -559,7 +675,7 @@ int select_query(string sql, string col1name)
     string output = "SELECT ";
     string token = "";
 
-    //Append the 1st column's name 
+    //Append the 1st column's name
     output.append(col1name);
 
     //Get the colnames
@@ -1195,7 +1311,8 @@ int handleQuery(string sql)
     }
 }
 
-void deleteResidues(){
+void deleteResidues()
+{
     char systemcall[512] = "";
 
     sprintf(systemcall, "rm -r Client%dQuery 2>/dev/null", n_client);
@@ -1203,7 +1320,6 @@ void deleteResidues(){
 
     sprintf(systemcall, "cd Clients/Client%d && rm msg.txt 2>/dev/null && rm signed_digest%d.txt 2>/dev/null && rm Client%dQuery.zip 2>/dev/null", n_client, n_client, n_client);
     system(systemcall);
-
 }
 
 int main(int argc, char *argv[])

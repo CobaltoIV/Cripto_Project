@@ -326,7 +326,7 @@ void sumcolumn_where(char *columndir, vector<string> cond_cols, vector<int> mode
                     comp = output[modes[i]]; // If it's the first condition just don't need to multiply
                 else
                 {
-                    if (comptype = 0) // AND
+                    if (comptype == 0) // AND
                     {
                         comp = AND(comp, output[modes[i]], evaluator, relinks);
                         /*
@@ -463,7 +463,7 @@ void selectcollumn_where(vector<string> cond_cols, vector<int> modes, vector<str
                     comp = output[modes[i]]; // If it's the first condition just don't need to multiply
                 else
                 {
-                    if (comptype = 0) // AND
+                    if (comptype == 0) // AND
                     {
                         comp = AND(comp, output[modes[i]], evaluator, relinks);
                         /*
