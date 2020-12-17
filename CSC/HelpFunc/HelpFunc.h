@@ -30,6 +30,17 @@ using namespace seal;
  */
 void create_msg(string error_msg);
 
+/**
+ * @brief  Takes a condition from where and adds it into the condition vectors
+ * @note   
+ * @param  cond: Condition
+ * @param  p: Path to table
+ * @param  queriespath: Path to folder where the numbers to be compared are
+ * @param  cond_cols: Vector with paths to cols from previous conditions
+ * @param  cond_nums: Vector with paths to nums from previous conditions
+ * @param  mode: Vector with the types of previous conditions comparisons
+ * @retval None
+ */
 bool process_cond(string cond, string p, string queriespath, vector<string>* cond_cols, vector<string>* cond_nums, vector<int>* mode);
 /**
  * @brief  
@@ -52,11 +63,12 @@ void save_hom_enc(Ciphertext x, char *dir, char *filename);
 Ciphertext load_hom_enc(char *dir, char *filename, SEALContext context);
 
 /**
- * @brief  
+ * @brief  Creates SEALCONTEXT
  * @note   
  * @retval 
  */
 SEALContext create_context(int p_m_degree, int p_mod);
+
 
 string d2h(int x);
 
@@ -113,13 +125,12 @@ void print_vec(vector<int> x);
 void enc_int_total(int x, Encryptor *encryptor, char *directory, int n_bit);
 
 /**
- * @brief  
- * @note   
- * @param  x_hex: 
- * @param  bin: 
- * @param  directory: 
- * @param  context: 
- * @retval None
+ * @brief Loads an homormophic encrypted number into its respective Ciphertext and vector of Ciphertexts for hexadecimal and binary version
+ * 
+ * @param x_hex 
+ * @param bin 
+ * @param directory 
+ * @param context 
  */
 void dec_int_total(Ciphertext* x_hex, vector<Ciphertext>* bin, char* directory, SEALContext context);
 
@@ -140,5 +151,11 @@ bool chkdir(char* dirpath);
 
 bool createdir(char* dirpath);
 
+/**
+ * @brief Gets next line number from a collumn
+ * 
+ * @param columndir 
+ * @return string 
+ */
 string getlinenumber(char *columndir);
 

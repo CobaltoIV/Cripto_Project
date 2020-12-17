@@ -24,6 +24,15 @@
 using namespace std;
 using namespace seal;
 
+/**
+ * @brief Takes in a line number and a table and retrives that line from the table
+ *
+ * @param tabledir: table path
+ * @param line: line number
+ * @param tablename: table name
+ * @return true: In case of sucessfull operation
+ * @return false: In case of failure
+ */
 bool selectline(char *tabledir, string line, char *tablename)
 {
     DIR *folder;
@@ -51,14 +60,11 @@ bool selectline(char *tabledir, string line, char *tablename)
         }
         else if (entry->d_type == DT_DIR) // if the entry is a folder(only folder inside table directory would be the collumn folder)
         {
-            // open directory
-            //cout << entry->d_name << endl;
-
             colname = &entry->d_name[0];
-            //cout << tablename << endl;
+
             sprintf(systemcall, "mkdir Server/Result/%s/%s", tablename, colname);
             system(systemcall);
-            // if it's the wanted line
+
             // Get fullpath for number in entry
             ss << tabledir << "/" << entry->d_name;
             ss << "/" << line;
@@ -84,6 +90,14 @@ bool selectline(char *tabledir, string line, char *tablename)
     return true;
 }
 
+/**
+ * @brief Takes in a line number and deletes it from the table
+ * 
+ * @param tabledir: Table path
+ * @param line: line numer
+ * @return true: In case of sucessfull operation
+ * @return false: In case of failure
+ */
 bool deleteline(char *tabledir, string line)
 {
     DIR *folder;
@@ -233,8 +247,6 @@ void sumcolumn(char *columndir, SEALContext context, Evaluator *evaluator, Relin
         }
         else if (entry->d_type == DT_DIR) // if the entry is a folder(only folder inside directory would be the bin folder)
         {
-            // open directory
-            //cout << entry->d_name << endl;
             // Get fullpath for number in entry
             ss << columndir << "/" << entry->d_name;
             fullpath = ss.str();
@@ -274,9 +286,9 @@ void sumcolumn(char *columndir, SEALContext context, Evaluator *evaluator, Relin
  * @param  cond_cols: vector with collumns in conditions
  * @param  modes: vector with types of comparisons
  * @param  cond_nums: vectot with numbers to be compared
- * @param  context: 
- * @param  *evaluator: 
- * @param  relinks: 
+ * @param  context:
+ * @param  *evaluator:
+ * @param  relinks:
  * @retval None
  */
 void sumcolumn_where(char *columndir, vector<string> cond_cols, vector<int> modes, vector<string> cond_nums, SEALContext context, Evaluator *evaluator, RelinKeys relinks, int comptype)
@@ -398,12 +410,12 @@ void sumcolumn_where(char *columndir, vector<string> cond_cols, vector<int> mode
 /**
  * @brief  Takes a group of conditrions and saves their results into the Server/Result/Comp folder per line
  * @note   Function is supposed to be called in SELECT queries with where
- * @param  cond_cols: 
- * @param  modes: 
- * @param  cond_nums: 
- * @param  context: 
- * @param  *evaluator: 
- * @param  relinks: 
+ * @param  cond_cols:
+ * @param  modes:
+ * @param  cond_nums:
+ * @param  context:
+ * @param  *evaluator:
+ * @param  relinks:
  * @retval None
  */
 void selectcollumn_where(vector<string> cond_cols, vector<int> modes, vector<string> cond_nums, SEALContext context, Evaluator *evaluator, RelinKeys relinks, int comptype)
@@ -507,8 +519,8 @@ void selectcollumn_where(vector<string> cond_cols, vector<int> modes, vector<str
 
 /**
  * @brief Process and execute SELECT LINE query
- * 
- * @param query 
+ *
+ * @param query
  */
 void selectline_exec(string query)
 {
@@ -549,7 +561,7 @@ void selectline_exec(string query)
     sprintf(systemcall, "mkdir Server/Result/%s", tablename);
     system(systemcall);
     // Sum the collumn and save result into Server/Result/sum.res
-    if(!selectline(tabledir, line, tablename))
+    if (!selectline(tabledir, line, tablename))
         return;
 
     ss.str(string());
@@ -564,9 +576,9 @@ void selectline_exec(string query)
  * @note   Function is supposed to be called in SELECT queries with 1 condition
  * @param  query: Query string
  * @param  queriespath: Path to folder with query's components
- * @param  context: 
- * @param  *evaluator: 
- * @param  relinks: 
+ * @param  context:
+ * @param  *evaluator:
+ * @param  relinks:
  * @retval None
  */
 void select_exec_where1(string query, string queriespath, SEALContext context, Evaluator *evaluator, RelinKeys relinks)
@@ -649,9 +661,9 @@ void select_exec_where1(string query, string queriespath, SEALContext context, E
  * @note   Function is supposed to be called in SELECT queries with 2 condition
  * @param  query: Query string
  * @param  queriespath: Path to folder with query's components
- * @param  context: 
- * @param  *evaluator: 
- * @param  relinks: 
+ * @param  context:
+ * @param  *evaluator:
+ * @param  relinks:
  * @retval None
  */
 void select_exec_where2(string query, string queriespath, SEALContext context, Evaluator *evaluator, RelinKeys relinks, int comptype)
@@ -747,8 +759,8 @@ void select_exec_where2(string query, string queriespath, SEALContext context, E
 
 /**
  * @brief  Process and execute CREATE query
- * @note   
- * @param  query: 
+ * @note
+ * @param  query:
  * @retval None
  */
 void create_exec(string query, int owner)
@@ -803,9 +815,9 @@ void create_exec(string query, int owner)
 
 /**
  * @brief  Process and execute INSERT query
- * @note   
- * @param  query: 
- * @param  queriespath: 
+ * @note
+ * @param  query:
+ * @param  queriespath:
  * @retval None
  */
 void insert_exec(string query, string queriespath)
@@ -913,8 +925,8 @@ void insert_exec(string query, string queriespath)
 
 /**
  * @brief  Process and execute SELECT query without conditions
- * @note   
- * @param  query: 
+ * @note
+ * @param  query:
  * @retval None
  */
 void select_exec(string query)
@@ -984,11 +996,11 @@ void select_exec(string query)
 }
 /**
  * @brief  Process and execute SUM query without conditions
- * @note   
- * @param  query: 
- * @param  context: 
- * @param  *evaluator: 
- * @param  relinks: 
+ * @note
+ * @param  query:
+ * @param  context:
+ * @param  *evaluator:
+ * @param  relinks:
  * @retval None
  */
 void sum_exec(string query, SEALContext context, Evaluator *evaluator, RelinKeys relinks)
@@ -1049,12 +1061,12 @@ void sum_exec(string query, SEALContext context, Evaluator *evaluator, RelinKeys
 
 /**
  * @brief  Process and executes SUM query with 1 condition
- * @note   
- * @param  query: 
- * @param  queriespath: 
- * @param  context: 
- * @param  *evaluator: 
- * @param  relinks: 
+ * @note
+ * @param  query:
+ * @param  queriespath:
+ * @param  context:
+ * @param  *evaluator:
+ * @param  relinks:
  * @retval None
  */
 void sum_exec_where1(string query, string queriespath, SEALContext context, Evaluator *evaluator, RelinKeys relinks)
@@ -1118,12 +1130,12 @@ void sum_exec_where1(string query, string queriespath, SEALContext context, Eval
 
 /**
  * @brief  Processes and executes SUM query with 2 conditions
- * @note   
- * @param  query: 
- * @param  queriespath: 
- * @param  context: 
- * @param  *evaluator: 
- * @param  relinks: 
+ * @note
+ * @param  query:
+ * @param  queriespath:
+ * @param  context:
+ * @param  *evaluator:
+ * @param  relinks:
  * @retval None
  */
 void sum_exec_where2(string query, string queriespath, SEALContext context, Evaluator *evaluator, RelinKeys relinks, int comptype)
@@ -1208,8 +1220,8 @@ void sum_exec_where2(string query, string queriespath, SEALContext context, Eval
 
 /**
  * @brief Process and execute DELETE query
- * 
- * @param query 
+ *
+ * @param query
  */
 void delete_exec(string query)
 {
@@ -1248,7 +1260,7 @@ void delete_exec(string query)
         //Remove the current column name from the input string
         alllines.erase(0, pos + delimiter.length());
         // Get directory of collumn
-        if(!deleteline(tabledir, line))
+        if (!deleteline(tabledir, line))
             return;
 
         ss.str(string());
@@ -1259,12 +1271,12 @@ void delete_exec(string query)
 
 /**
  * @brief  Process query and call respective routine for the type of query
- * @note   
- * @param  query: 
- * @param  queriespath: 
- * @param  context: 
- * @param  *evaluator: 
- * @param  relinks: 
+ * @note
+ * @param  query: Formatted Query string
+ * @param  queriespath: Path to the Queries/ClientnQuery folder
+ * @param  context: SEALContext of the homormophic encryption
+ * @param  *evaluator: SEAL Evaluator
+ * @param  relinks: Relinearization keys
  * @retval None
  */
 void query_exec(string query, string queriespath, SEALContext context, Evaluator *evaluator, RelinKeys relinks, int cid)
@@ -1281,8 +1293,6 @@ void query_exec(string query, string queriespath, SEALContext context, Evaluator
     token = query.substr(0, pos);
     query.erase(0, pos + delimiter.length());
 
-    //cout << query << endl;
-
     if (token.compare("CREATE") == 0)
     {
         create_exec(query, cid);
@@ -1296,22 +1306,26 @@ void query_exec(string query, string queriespath, SEALContext context, Evaluator
         // if it's a SUM
         if (query.find(s3) != std::string::npos)
         {
+            // if there is a condition
             if (query.find(s1) != std::string::npos)
             {
-                // if there is a second condition
+                // If it's an AND
                 if (query.find(s2) != std::string::npos)
                 {
                     sum_exec_where2(query, queriespath, context, evaluator, relinks, 0);
                 }
+                // If it's an OR
                 else if (query.find(s5) != std::string::npos)
                 {
                     sum_exec_where2(query, queriespath, context, evaluator, relinks, 1);
                 }
+                // If there's only one condition
                 else
                 {
                     sum_exec_where1(query, queriespath, context, evaluator, relinks);
                 }
             }
+            // if there's no condition
             else
             {
                 sum_exec(query, context, evaluator, relinks);
@@ -1319,20 +1333,23 @@ void query_exec(string query, string queriespath, SEALContext context, Evaluator
         }
         else if (query.find(s1) != std::string::npos) // If there's a condition
         {
-            // if there is a second condition
+            // If it's an AND
             if (query.find(s2) != std::string::npos)
             {
                 select_exec_where2(query, queriespath, context, evaluator, relinks, 0);
             }
+            // If it's an OR
             else if (query.find(s5) != std::string::npos)
             {
                 select_exec_where2(query, queriespath, context, evaluator, relinks, 1);
             }
+            // If it's one condition
             else
             {
                 select_exec_where1(query, queriespath, context, evaluator, relinks);
             }
         }
+        // If it's a SELECT LINE
         else if (query.find(s4) != std::string::npos)
         {
             selectline_exec(query);
@@ -1349,9 +1366,9 @@ void query_exec(string query, string queriespath, SEALContext context, Evaluator
 }
 
 /**
- * @brief  retrives console output
- * @note   
- * @param  cmd: Commend to be executed
+ * @brief  Retrives console output from an input command
+ * @note
+ * @param  cmd: Command to be executed
  * @retval String with console output
  */
 string exec(const char *cmd)
@@ -1379,14 +1396,13 @@ string exec(const char *cmd)
 
 /**
  * @brief  Verifies signature of a file according to an authority
- * @note   
+ * @note
  * @param  directory: Directory where the file is found
  * @param  filename: Filename
  * @param  signedfile: Filename signed by the authority through SHA256 digest function
  * @param  authority: Authority which signed the file
- * @retval boolean 
+ * @retval boolean
  */
-
 string verifysgn(char *directory, char *filename, char *signedfile, char *authority)
 {
     char systemcall[512] = "";

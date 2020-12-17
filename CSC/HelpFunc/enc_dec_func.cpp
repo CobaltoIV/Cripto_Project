@@ -159,6 +159,14 @@ void save_hom_enc(Ciphertext x, char *dir, char *filename)
     fb.close();
 }
 
+/**
+ * @brief Loads a Ciphertext from a file
+ * 
+ * @param dir 
+ * @param filename 
+ * @param context 
+ * @return Ciphertext 
+ */
 Ciphertext load_hom_enc(char *dir, char *filename, SEALContext context)
 {
 
@@ -346,6 +354,12 @@ void enc_int_total(int x, Encryptor *encryptor, char *directory, int n_bit)
     }
 }
 
+/**
+ * @brief Gets next line number from a collumn
+ * 
+ * @param columndir 
+ * @return string 
+ */
 string getlinenumber(char *columndir)
 {
     DIR *folder;
@@ -394,6 +408,14 @@ string getlinenumber(char *columndir)
     return last_line;
 }
 
+/**
+ * @brief Loads an homormophic encrypted number into its respective Ciphertext and vector of Ciphertexts for hexadecimal and binary version
+ * 
+ * @param x_hex 
+ * @param bin 
+ * @param directory 
+ * @param context 
+ */
 void dec_int_total(Ciphertext *x_hex, vector<Ciphertext> *bin, char *directory, SEALContext context)
 {
     char systemcall[500];
@@ -421,6 +443,7 @@ void dec_int_total(Ciphertext *x_hex, vector<Ciphertext> *bin, char *directory, 
         }
         else if (entry->d_type != DT_DIR)
         {
+            // load hexadecimal version
             (*x_hex) = load_hom_enc(directory, entry->d_name, context);
         }
     }
