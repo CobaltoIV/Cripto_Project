@@ -23,21 +23,8 @@
 
 using namespace std;
 using namespace seal;
-/**
- * @brief  Creates file with wanted error message
- * @note   
- * @param  error_msg: error message
- * @retval None
- */
-void create_msg(string error_msg)
-{
-    ofstream fb;
-    fb.open("Server/Result/msg.txt");
-    fb << error_msg;
-    fb.close();
-}
 
-void selectline(char *tabledir, string line, char *tablename)
+bool selectline(char *tabledir, string line, char *tablename)
 {
     DIR *folder;
     stringstream ss;
@@ -65,10 +52,10 @@ void selectline(char *tabledir, string line, char *tablename)
         else if (entry->d_type == DT_DIR) // if the entry is a folder(only folder inside table directory would be the collumn folder)
         {
             // open directory
-            cout << entry->d_name << endl;
+            //cout << entry->d_name << endl;
 
             colname = &entry->d_name[0];
-            cout << tablename << endl;
+            //cout << tablename << endl;
             sprintf(systemcall, "mkdir Server/Result/%s/%s", tablename, colname);
             system(systemcall);
             // if it's the wanted line
@@ -77,7 +64,14 @@ void selectline(char *tabledir, string line, char *tablename)
             ss << "/" << line;
             fullpath = ss.str();
             linepath = &fullpath[0];
-            cout << fullpath << endl;
+
+            if (!chkdir(linepath))
+            {
+                system("rm -r Server/Result/*");
+                string err = "ERROR : Invalid Line";
+                create_msg(err);
+                return false;
+            }
             // Delete entry from collumn
             sprintf(systemcall, "cp -r %s Server/Result/%s/%s", linepath, tablename, colname);
             system(systemcall);
@@ -87,9 +81,10 @@ void selectline(char *tabledir, string line, char *tablename)
         }
     }
     closedir(folder);
+    return true;
 }
 
-void deleteline(char *tabledir, string line)
+bool deleteline(char *tabledir, string line)
 {
     DIR *folder;
     stringstream ss;
@@ -99,7 +94,7 @@ void deleteline(char *tabledir, string line)
     char systemcall[500];
     struct dirent *entry;
     int l = 1, ent;
-    int lin =  stoi(line);
+    int lin = stoi(line);
 
     // open table directory to iterate through entries
     folder = opendir(tabledir);
@@ -118,14 +113,19 @@ void deleteline(char *tabledir, string line)
         else if (entry->d_type == DT_DIR) // if the entry is a folder(only folder inside table directory would be the collumn folder)
         {
             // open directory
-            cout << entry->d_name << endl; // collumn name
+            //cout << entry->d_name << endl; // collumn name
             // Get fullpath for number in entry
             ss << tabledir << "/" << entry->d_name;
             cols.push_back(ss.str());
             ss << "/" << line;
             fullpath = ss.str();
             linepath = &fullpath[0];
-            cout << fullpath << endl;
+            if (!chkdir(linepath))
+            {
+                string err = "ERROR : Invalid Line";
+                create_msg(err);
+                return false;
+            }
             // Delete entry from collumn
             sprintf(systemcall, "rm -r %s", linepath);
             system(systemcall);
@@ -159,7 +159,7 @@ void deleteline(char *tabledir, string line)
             {
                 ent = stoi(entry->d_name);
 
-                if(ent >= lin)
+                if (ent >= lin)
                 {
                     // open directory
                     //cout << entry->d_name << endl; // collumn name
@@ -187,13 +187,13 @@ void deleteline(char *tabledir, string line)
                     //Clear contents of previous
                     fullpath.clear();
                     ss.str(string());
-                    
                 }
                 l++;
             }
         }
         closedir(folder);
     }
+    return true;
 }
 /**
  * @brief  It takes a column and sums every entry.
@@ -234,7 +234,7 @@ void sumcolumn(char *columndir, SEALContext context, Evaluator *evaluator, Relin
         else if (entry->d_type == DT_DIR) // if the entry is a folder(only folder inside directory would be the bin folder)
         {
             // open directory
-            cout << entry->d_name << endl;
+            //cout << entry->d_name << endl;
             // Get fullpath for number in entry
             ss << columndir << "/" << entry->d_name;
             fullpath = ss.str();
@@ -359,7 +359,7 @@ void sumcolumn_where(char *columndir, vector<string> cond_cols, vector<int> mode
             ss << columndir << "/" << entry->d_name;
             fullpath = ss.str();
             dirpath = &fullpath[0];
-            cout << dirpath << endl;
+            //cout << dirpath << endl;
 
             // Load entry into x_hex and x_bin variables
             dec_int_total(&x_hex, &x_bin, dirpath, context);
@@ -505,6 +505,11 @@ void selectcollumn_where(vector<string> cond_cols, vector<int> modes, vector<str
     closedir(folder);
 }
 
+/**
+ * @brief Process and execute SELECT LINE query
+ * 
+ * @param query 
+ */
 void selectline_exec(string query)
 {
     string c, line, table, temp;
@@ -536,7 +541,7 @@ void selectline_exec(string query)
     char *tabledir = &p[0];
     if (!chkdir(tabledir))
     {
-        string err = "Table doesn't exist";
+        string err = "ERROR : Table doesn't exist";
         create_msg(err);
         return;
     }
@@ -544,7 +549,8 @@ void selectline_exec(string query)
     sprintf(systemcall, "mkdir Server/Result/%s", tablename);
     system(systemcall);
     // Sum the collumn and save result into Server/Result/sum.res
-    selectline(tabledir, line, tablename);
+    if(!selectline(tabledir, line, tablename))
+        return;
 
     ss.str(string());
 
@@ -593,7 +599,7 @@ void select_exec_where1(string query, string queriespath, SEALContext context, E
     char *tabledir = &p[0];
     if (!chkdir(tabledir))
     {
-        string err = "Table doesn't exist";
+        string err = "ERROR : Table doesn't exist";
         create_msg(err);
         return;
     }
@@ -615,7 +621,8 @@ void select_exec_where1(string query, string queriespath, SEALContext context, E
         char *coldir = &c[0];
         if (!chkdir(coldir))
         {
-            string err = "Collumn doesn't exist";
+            system("rm -r Server/Result/*");
+            string err = "ERROR : Collumn " + col + " doesn't exist";
             create_msg(err);
             return;
         }
@@ -627,7 +634,8 @@ void select_exec_where1(string query, string queriespath, SEALContext context, E
         ss.str(string());
     }
     // Process conditions in where
-    process_cond(query, p, queriespath, &cond_cols, &cond_nums, &mode);
+    if (!process_cond(query, p, queriespath, &cond_cols, &cond_nums, &mode))
+        return;
     // Execute comparisons in conditions and save them to be read in the Client side
     selectcollumn_where(cond_cols, mode, cond_nums, context, evaluator, relinks, 0);
 
@@ -707,8 +715,10 @@ void select_exec_where2(string query, string queriespath, SEALContext context, E
         char *coldir = &c[0];
         if (!chkdir(coldir))
         {
-            cout << "Collumn doesn't exist";
-            exit(1);
+            system("rm -r Server/Result/*");
+            string err = "ERROR : Collumn " + col + " doesn't exist";
+            create_msg(err);
+            return;
         }
 
         sprintf(systemcall, "cp -r %s Server/Result/%s ", coldir, tablename);
@@ -720,128 +730,19 @@ void select_exec_where2(string query, string queriespath, SEALContext context, E
     pos = query.find(conddelimiter);
     cond1 = query.substr(0, pos);
     query.erase(0, pos + conddelimiter.length());
-    //cout << cond1 << endl;
-    //cout << query << endl;
+
     // process first condition
-    process_cond(cond1, p, queriespath, &cond_cols, &cond_nums, &mode);
+    if (!process_cond(cond1, p, queriespath, &cond_cols, &cond_nums, &mode))
+        return;
     // process second condition
-    process_cond(query, p, queriespath, &cond_cols, &cond_nums, &mode);
+    if (!process_cond(query, p, queriespath, &cond_cols, &cond_nums, &mode))
+        return;
     // execute and save comparisons
     selectcollumn_where(cond_cols, mode, cond_nums, context, evaluator, relinks, comptype);
 
     ss << "SELECT WHERE " << table;
     string m = ss.str();
     create_msg(m);
-}
-
-void sumcolumn_where_debug(char *columndir, vector<string> cond_cols, vector<int> modes, vector<string> cond_nums, SEALContext context, Evaluator *evaluator, RelinKeys relinks, Decryptor *decryptor)
-{
-    DIR *folder;
-    stringstream ss;
-    string fullpath, aux, auxdir, auxfile, auxdir_hex, col, col_line, num;
-    char *dirpath, *resultfile, *resultdir, *enc_dir, *hexdir, *dir, *col_line_dir, *numdir;
-    char systemcall[500];
-    struct dirent *entry;
-
-    Ciphertext x_hex, num_hex, col_hex, comp, sum_total, add;
-    vector<Ciphertext> x_bin, num_bin, col_bin, output;
-    Plaintext res1, res2, res3;
-    bool first = true;
-
-    // open column directory to iterate through entries
-    folder = opendir(columndir);
-
-    if (folder == NULL)
-    {
-        perror("Unable to read directory");
-        exit(1);
-    }
-    while ((entry = readdir(folder)))
-    {
-        if (!strcmp(entry->d_name, ".") || !strcmp(entry->d_name, "..")) // ignore non important entries
-        {
-            // do nothing (straight logic)
-        }
-        else if (entry->d_type == DT_DIR) // if the entry is a folder(corresponds to a line)
-        {
-            // check conditions for this line using entry
-            for (int i = 0; i < cond_cols.size(); i++)
-            {
-                col = cond_cols[i];
-                ss << col << "/" << entry->d_name;
-                col_line = ss.str();
-
-                cout << col_line << endl;
-
-                col_line_dir = &col_line[0];
-                num = cond_nums[i];
-                numdir = &num[0];
-                // load numbers
-                dec_int_total(&num_hex, &num_bin, numdir, context);
-                dec_int_total(&col_hex, &col_bin, col_line_dir, context);
-                (*decryptor).decrypt(col_hex, res2);
-                (*decryptor).decrypt(num_hex, res3);
-                cout << "    + noise budget in encrypted_result: " << (*decryptor).invariant_noise_budget(col_hex) << " bits" << endl;
-                cout << "    + noise budget in encrypted_result: " << (*decryptor).invariant_noise_budget(num_hex) << " bits" << endl;
-                //compare
-                output = full_homomorphic_comparator(col_bin, num_bin, evaluator, relinks);
-
-                if (i == 0)
-                {
-                    comp = output[modes[i]];
-                    (*decryptor).decrypt(comp, res1);
-                    cout << "    + noise budget in encrypted_result: " << (*decryptor).invariant_noise_budget(comp) << " bits" << endl;
-                    cout << res2.to_string() << ">" << res3.to_string() << "=" << res1.to_string() << endl;
-                }
-                else
-                {
-                    (*evaluator).multiply_inplace(comp, output[modes[i]]);
-                    (*evaluator).relinearize_inplace(comp, relinks);
-                }
-                num_bin.clear();
-                col_bin.clear();
-                ss.str(string());
-            }
-
-            cout << entry->d_name << endl;
-
-            // Get fullpath for number in entry
-            ss << columndir << "/" << entry->d_name;
-            fullpath = ss.str();
-            dirpath = &fullpath[0];
-            cout << dirpath << endl;
-
-            // load entry encryptons into x_hex and x_bin variables
-            dec_int_total(&x_hex, &x_bin, dirpath, context);
-            if (first)
-            {
-
-                // for first entry just insert this
-                (*evaluator).multiply(comp, x_hex, add);
-                (*evaluator).relinearize_inplace(add, relinks);
-                sum_total = add;
-                first = false;
-            }
-            else
-            {
-                //add the entry to the result
-                (*evaluator).multiply(comp, x_hex, add);
-                (*evaluator).relinearize_inplace(add, relinks);
-                (*evaluator).add_inplace(sum_total, add);
-            }
-            //Clear contents of previous
-            x_bin.clear();
-            fullpath.clear();
-            ss.str(string());
-        }
-    }
-    closedir(folder);
-    auxdir = "Server/Result";
-    resultdir = &auxdir[0];
-    auxfile = "sum.res";
-    resultfile = &auxfile[0];
-    // Copy result of the comparison to the folder with the respective number
-    save_hom_enc(sum_total, resultdir, resultfile);
 }
 
 /**
@@ -867,7 +768,7 @@ void create_exec(string query, int owner)
     // Create table
     if (!createdir(dir))
     {
-        string err = "Cannot create table";
+        string err = "ERROR : Cannot create table";
         create_msg(err);
         return;
     }
@@ -927,9 +828,11 @@ void insert_exec(string query, string queriespath)
     string p = "Server/Database/";
     p.append(table);
     char *tabledir = &p[0];
+    // Check table exists
     if (!chkdir(tabledir))
     {
-        string err = "Table doesn't exist";
+        //system("rm -r Server/Result/*");
+        string err = "ERROR : Table doesn't exist";
         create_msg(err);
         return;
     }
@@ -959,6 +862,13 @@ void insert_exec(string query, string queriespath)
         allcolls.erase(0, pos + delimiter.length());
         ss << "Server/Database/" << table << "/" << col;
         c = ss.str();
+        coldir = &c[0];
+        if (!chkdir(coldir))
+        {
+            string err = "ERROR : Collumn " + col + " doesn't exist";
+            create_msg(err);
+            return;
+        }
         cols.push_back(c);
         ss.str(string());
     }
@@ -1053,19 +963,21 @@ void select_exec(string query)
         ss << p << "/" << col;
         c = ss.str();
         char *coldir = &c[0];
+        // Check collumn exists
         if (!chkdir(coldir))
         {
-            string err = "Collumn doesn't exist";
+            system("rm -r Server/Result/*");
+            string err = "ERROR : Collumn " + col + " doesn't exist";
             create_msg(err);
             return;
         }
-
+        // copy collumn to Result folder
         sprintf(systemcall, "cp -r %s Server/Result/%s ", coldir, tablename);
         system(systemcall);
 
         ss.str(string());
     }
-
+    // Send Sucess message
     ss << "SELECT " << table;
     string m = ss.str();
     create_msg(m);
@@ -1110,7 +1022,7 @@ void sum_exec(string query, SEALContext context, Evaluator *evaluator, RelinKeys
     char *tabledir = &p[0];
     if (!chkdir(tabledir))
     {
-        string err = "Table doesn't exist";
+        string err = "ERROR : Table doesn't exist";
         create_msg(err);
         return;
     }
@@ -1119,9 +1031,10 @@ void sum_exec(string query, SEALContext context, Evaluator *evaluator, RelinKeys
     ss << p << "/" << col;
     c = ss.str();
     coldir = &c[0];
+    // Check collumn exists
     if (!chkdir(coldir))
     {
-        string err = "Collumn doesn't exist";
+        string err = "ERROR : Collumn " + col + " doesn't exist";
         create_msg(err);
         return;
     }
@@ -1129,7 +1042,7 @@ void sum_exec(string query, SEALContext context, Evaluator *evaluator, RelinKeys
     sumcolumn(coldir, context, evaluator, relinks);
 
     ss.str(string());
-
+    // Send sucess message
     string m = "SUM ";
     create_msg(m);
 }
@@ -1180,7 +1093,7 @@ void sum_exec_where1(string query, string queriespath, SEALContext context, Eval
     char *tabledir = &p[0];
     if (!chkdir(tabledir))
     {
-        string err = "Table doesn't exist";
+        string err = "ERROR : Table doesn't exist";
         create_msg(err);
         return;
     }
@@ -1191,11 +1104,12 @@ void sum_exec_where1(string query, string queriespath, SEALContext context, Eval
     ss.str(string());
     if (!chkdir(coldir))
     {
-        string err = "Collumn doesn't exist";
+        string err = "ERROR : Collumn doesn't exist";
         create_msg(err);
         return;
     }
-    process_cond(query, p, queriespath, &cond_cols, &cond_nums, &mode);
+    if (!process_cond(query, p, queriespath, &cond_cols, &cond_nums, &mode))
+        return;
     sumcolumn_where(coldir, cond_cols, mode, cond_nums, context, evaluator, relinks, 0);
 
     string m = "SUM WHERE";
@@ -1256,7 +1170,7 @@ void sum_exec_where2(string query, string queriespath, SEALContext context, Eval
     char *tabledir = &p[0];
     if (!chkdir(tabledir))
     {
-        string err = "Table doesn't exist";
+        string err = "ERROR : Table doesn't exist";
         create_msg(err);
         return;
     }
@@ -1264,13 +1178,13 @@ void sum_exec_where2(string query, string queriespath, SEALContext context, Eval
     // Get directory of collumn
     ss << p << "/" << col;
     c = ss.str();
-    cout << c << endl;
+    //cout << c << endl;
     coldir = &c[0];
-    cout << coldir << endl;
+    //cout << coldir << endl;
     ss.str(string());
     if (!chkdir(coldir))
     {
-        string err = "Collumn doesn't exist";
+        string err = "ERROR : Collumn doesn't exist";
         create_msg(err);
         return;
     }
@@ -1281,110 +1195,22 @@ void sum_exec_where2(string query, string queriespath, SEALContext context, Eval
 
     //cout << cond1 << " First cond" << endl;
 
-    process_cond(cond1, p, queriespath, &cond_cols, &cond_nums, &mode);
-    process_cond(query, p, queriespath, &cond_cols, &cond_nums, &mode);
+    if (!process_cond(cond1, p, queriespath, &cond_cols, &cond_nums, &mode))
+        return;
+    // process second condition
+    if (!process_cond(query, p, queriespath, &cond_cols, &cond_nums, &mode))
+        return;
     sumcolumn_where(coldir, cond_cols, mode, cond_nums, context, evaluator, relinks, comptype);
 
     string m = "SUM WHERE";
     create_msg(m);
 }
 
-void sum_exec_where1_debug(string query, string queriespath, size_t pos, SEALContext context, Evaluator *evaluator, RelinKeys relinks, Decryptor *decryptor)
-{
-    string c1, c, col, table, temp, cond, num, comp, num_dir;
-    string delimiter = " ";
-    string coldelimiter = " FROM ";
-    string tabdelimiter = " WHERE ";
-    vector<string> cond_nums, cond_cols;
-    vector<int> mode;
-
-    stringstream ss;
-    char systemcall[500];
-    char *coldir, *tablename;
-
-    //cout << query << "94u40707" << endl;
-    // get the SUM token out
-    pos = query.find(delimiter);
-    temp = query.substr(0, pos);
-    query.erase(0, pos + delimiter.length());
-    // get the collumn to be summed
-    pos = query.find(coldelimiter);
-    col = query.substr(0, pos);
-    query.erase(0, pos + coldelimiter.length());
-
-    // get table name
-    pos = query.find(tabdelimiter);
-    table = query.substr(0, pos);
-    query.erase(0, pos + tabdelimiter.length());
-    tablename = &table[0];
-
-    // check table exists
-    string p = "Server/Database/";
-    p.append(table);
-    char *tabledir = &p[0];
-    if (!chkdir(tabledir))
-    {
-        cout << "Table doesn't exist";
-        exit(1);
-    }
-
-    // Get directory of collumn
-    ss << p << "/" << col;
-    c = ss.str();
-    cout << c << endl;
-    coldir = &c[0];
-    cout << coldir << endl;
-    ss.str(string());
-    if (!chkdir(coldir))
-    {
-        cout << "Collumn doesn't exist";
-        exit(1);
-    }
-    // get collumn to compare
-    pos = query.find(delimiter);
-    c1 = query.substr(0, pos);
-    query.erase(0, pos + delimiter.length());
-    //cout << c1 << endl;
-    ss << p << "/" << c1;
-    col = ss.str();
-    //cout << col << endl;
-    cond_cols.push_back(col);
-    ss.str(string());
-
-    // get type of comparison
-    pos = query.find(delimiter);
-    comp = query.substr(0, pos);
-    query.erase(0, pos + delimiter.length());
-    cout << query << endl;
-
-    if (comp.compare(">") == 0)
-    {
-        mode.push_back(0);
-    }
-    else if (comp.compare("=") == 0)
-    {
-        mode.push_back(1);
-    }
-    else if (comp.compare("<") == 0)
-    {
-        mode.push_back(2);
-    }
-
-    // cout << mode << endl;
-    // get number to be compared
-    pos = query.find(delimiter);
-    num = query.substr(0, pos);
-    query.erase(0, pos + delimiter.length());
-    cout << num << "numunu" << endl;
-
-    ss << queriespath << "/" << num;
-    num_dir = ss.str();
-    cond_nums.push_back(num_dir);
-    ss.str(string());
-
-    sumcolumn_where_debug(coldir, cond_cols, mode, cond_nums, context, evaluator, relinks, decryptor);
-}
-
+/**
+ * @brief Process and execute DELETE query
+ * 
+ * @param query 
+ */
 void delete_exec(string query)
 {
     string coldelimiter = "FROM ";
@@ -1410,7 +1236,7 @@ void delete_exec(string query)
     char *tabledir = &p[0];
     if (!chkdir(tabledir))
     {
-        string err = "Table doesn't exist";
+        string err = "ERROR : Table doesn't exist";
         create_msg(err);
         return;
     }
@@ -1422,14 +1248,15 @@ void delete_exec(string query)
         //Remove the current column name from the input string
         alllines.erase(0, pos + delimiter.length());
         // Get directory of collumn
-
-        deleteline(tabledir, line);
+        if(!deleteline(tabledir, line))
+            return;
 
         ss.str(string());
     }
     string m = "DELETE Sucessfull";
     create_msg(m);
 }
+
 /**
  * @brief  Process query and call respective routine for the type of query
  * @note   
@@ -1449,7 +1276,6 @@ void query_exec(string query, string queriespath, SEALContext context, Evaluator
     string s3 = "SUM";
     string s4 = "LINE";
     string s5 = "OR";
-
 
     size_t pos = query.find(delimiter);
     token = query.substr(0, pos);
@@ -1598,7 +1424,8 @@ int main(int argc, char *argv[])
     sprintf(filename, "c%d-cert.crt", i);
     sprintf(signedfile, "c%d-cert_signed.txt", i);
     sprintf(authority, "CAcert.crt");
-    if(verifysgn(directory, filename, signedfile, authority).find(verified) != string::npos){
+    if (verifysgn(directory, filename, signedfile, authority).find(verified) != string::npos)
+    {
         cout << verified << ": Client Certificate" << endl;
     }
     else
@@ -1611,7 +1438,8 @@ int main(int argc, char *argv[])
     sprintf(filename, "Relin_key.txt");
     sprintf(signedfile, "Relin_key_signed.txt");
     sprintf(authority, "CAcert.crt");
-    if(verifysgn(directory, filename, signedfile, authority).find(verified) != string::npos){
+    if (verifysgn(directory, filename, signedfile, authority).find(verified) != string::npos)
+    {
         cout << verified << ": DB Relin Key" << endl;
     }
     else
@@ -1624,7 +1452,8 @@ int main(int argc, char *argv[])
     sprintf(filename, "Queries/Client%dQuery.zip", i);
     sprintf(signedfile, "Queries/signed_digest%d.txt", i);
     sprintf(authority, "c%d-cert.crt", i);
-    if(verifysgn(directory, filename, signedfile, authority).find(verified) != string::npos){
+    if (verifysgn(directory, filename, signedfile, authority).find(verified) != string::npos)
+    {
         cout << verified << ": Client Query" << endl;
     }
     else

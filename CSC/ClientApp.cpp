@@ -249,7 +249,6 @@ void print_select(char *tabledir, SEALContext context, Decryptor *decryptor)
     col = cols[0];
     coldir = &col[0];
 
-
     folder = opendir(coldir);
     if (folder == NULL)
     {
@@ -403,8 +402,11 @@ void readResult(string msg, string result_path, SEALContext context, Decryptor *
         else
         {
             read_select(msg, result_path, context, decryptor);
-
         }
+    }
+    else
+    {
+        cout << msg << endl;
     }
 }
 
@@ -486,7 +488,7 @@ void checkResult(SEALContext context, Decryptor *decryptor)
     system(systemcall);
 }
 
-void encryptValues(string values, SEALContext context, Encryptor* encryptor, int option)
+void encryptValues(string values, SEALContext context, Encryptor *encryptor, int option)
 {
 
     char filename[100];
@@ -539,7 +541,7 @@ void encryptValues(string values, SEALContext context, Encryptor* encryptor, int
     out.close();
 }
 
-int select_sum(string sql, SEALContext context, Encryptor* encryptor, string colname)
+int select_sum(string sql, SEALContext context, Encryptor *encryptor, string colname)
 {
     string delimiter = " ";
     size_t pos = 0;
@@ -617,7 +619,7 @@ int select_sum(string sql, SEALContext context, Encryptor* encryptor, string col
     pos = sql.find(delimiter);
     token = sql.substr(0, pos);
     sql.erase(0, pos + delimiter.length());
-    encryptValues(token, context, encryptor,1);
+    encryptValues(token, context, encryptor, 1);
 
     //Get the logical operator (AND or OR)
     pos = sql.find(delimiter);
@@ -657,12 +659,12 @@ int select_sum(string sql, SEALContext context, Encryptor* encryptor, string col
     pos = sql.find(delimiter);
     token = sql.substr(0, pos);
     sql.erase(0, pos + delimiter.length());
-    encryptValues(token, context,encryptor, 2);
+    encryptValues(token, context, encryptor, 2);
 
     return 0;
 }
 
-int select_query(string sql,SEALContext context, Encryptor* encryptor, string col1name)
+int select_query(string sql, SEALContext context, Encryptor *encryptor, string col1name)
 {
     cout << "query" << endl;
     size_t pos = 0;
@@ -672,7 +674,8 @@ int select_query(string sql,SEALContext context, Encryptor* encryptor, string co
 
     //Check if the col name has a coma
     pos = col1name.find(delimiter);
-    if (pos != col1name.npos){
+    if (pos != col1name.npos)
+    {
         col1name = col1name.substr(0, pos);
     }
     //Append the 1st column's name
@@ -690,7 +693,6 @@ int select_query(string sql,SEALContext context, Encryptor* encryptor, string co
     }
 
     cout << "col1name:" << col1name << "|" << endl;
-
 
     delimiter = ", ";
     while ((pos = colnames.find(delimiter)) != colnames.npos)
@@ -711,7 +713,8 @@ int select_query(string sql,SEALContext context, Encryptor* encryptor, string co
     delimiter = " ";
     pos = colnames.find(delimiter);
     token = colnames.substr(0, pos);
-    if (!token.empty()){
+    if (!token.empty())
+    {
         output.append(" ");
         output.append(token);
     }
@@ -872,7 +875,7 @@ int select_line(string sql)
     return 0;
 }
 
-int select(string sql, SEALContext context, Encryptor* encryptor, string col1name)
+int select(string sql, SEALContext context, Encryptor *encryptor, string col1name)
 {
     string delimiter = " ";
     size_t pos = 0;
@@ -961,7 +964,7 @@ int delete_row(string sql)
     return 0;
 }
 
-int insert(string sql, SEALContext context, Encryptor* encryptor)
+int insert(string sql, SEALContext context, Encryptor *encryptor)
 {
     string delimiter = " ";
     size_t pos = 0;
@@ -1275,7 +1278,7 @@ int create(string sql)
     return 0;
 }
 
-int handleQuery(string sql,SEALContext context, Encryptor* encryptor)
+int handleQuery(string sql, SEALContext context, Encryptor *encryptor)
 {
     string delimiter = " ";
     size_t pos = 0;

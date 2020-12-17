@@ -22,8 +22,15 @@
 using namespace std;
 using namespace seal;
 
+/**
+ * @brief  Creates file with wanted error message
+ * @note   
+ * @param  error_msg: error message
+ * @retval None
+ */
+void create_msg(string error_msg);
 
-void process_cond(string cond, string p, string queriespath, vector<string>* cond_cols, vector<string>* cond_nums, vector<int>* mode);
+bool process_cond(string cond, string p, string queriespath, vector<string>* cond_cols, vector<string>* cond_nums, vector<int>* mode);
 /**
  * @brief  
  * @note   
