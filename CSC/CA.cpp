@@ -23,9 +23,9 @@ using namespace seal;
 
 int main(int argc, char *argv[])
 {
-    int clientcount =  0;
-    char cmdout[256] = "";
-    char systemcall[512] = "";
+	int clientcount = 0;
+	char cmdout[256] = "";
+	char systemcall[512] = "";
 
 	//Handling input parameters
 	for (int i = 0; i < argc; ++i)
@@ -33,13 +33,13 @@ int main(int argc, char *argv[])
 		if (strcmp(argv[i], "-c") == 0)
 			clientcount = atoi(argv[++i]);
 
-		//if (strcmp(argv[i], "-o") == 0) //verbose mode, using /dev/null to suppress console output
-		//	strcpy(cmdout, " > /dev/null 2>&1");
+		if (strcmp(argv[i], "-o") == 0) //verbose mode, using /dev/null to suppress console output
+			strcpy(cmdout, " > /dev/null 2>&1");
 	}
 
 	if (clientcount <= 0) // We need to have clients
 	{
-		cerr << "Invalid number of clients: Must bigger than 0"<< endl;
+		cerr << "Invalid number of clients: Must bigger than 0" << endl;
 		exit(1);
 	}
 
@@ -56,12 +56,12 @@ int main(int argc, char *argv[])
 	SEALContext context(parms);
 	KeyGenerator keygen(context);
 	PublicKey public_key;
-    keygen.create_public_key(public_key);
+	keygen.create_public_key(public_key);
 	SecretKey private_key = keygen.secret_key();
 	RelinKeys relin_keys;
-    keygen.create_relin_keys(relin_keys);
-    //saving keys to txt files
-    cout << "Creating SEAL keys\n"
+	keygen.create_relin_keys(relin_keys);
+	//saving keys to txt files
+	cout << "Creating SEAL keys\n"
 		 << endl;
 	fstream fs("DBpublic_key.txt", fstream::binary | fstream::out);
 	public_key.save(fs);
@@ -73,19 +73,18 @@ int main(int argc, char *argv[])
 	relin_keys.save(fs);
 	fs.close();
 
-
 	Encryptor encryptor(context, public_key);
 
-    // Filesystem creation
+	// Filesystem creation
 	cout << "Create Database filesystem" << endl;
 
 	system("mkdir Admin");
 
-    cout << "CA created"<< endl;
+	cout << "CA created" << endl;
 
 	system("mkdir Server");
 
-    cout << "Server created"<< endl;
+	cout << "Server created" << endl;
 
 	system("cd Server && mkdir Queries && mkdir Result");
 
@@ -97,8 +96,8 @@ int main(int argc, char *argv[])
 
 	system("mkdir Clients");
 
-    cout << "Clients created"<< endl;
-    system("mv DBpublic_key.txt Admin");
+	cout << "Clients created" << endl;
+	system("mv DBpublic_key.txt Admin");
 	system("mv DBprivate_key.txt Admin");
 	system("mv Relin_key.txt Admin");
 
@@ -106,25 +105,23 @@ int main(int argc, char *argv[])
 	cout << "Generating CA cert" << endl;
 	sprintf(systemcall, "openssl req -x509 -sha256 -nodes -days 365 -newkey rsa:2048 -keyout CAprivate_key.key -out CAcert.crt -subj \"/C=PT/ST=Lisbon/L=Lisbon/O=Cripto/OU=CSC-Project/CN=CA\"%s && mv CAprivate_key.key CAcert.crt Admin", cmdout);
 	system(systemcall);
-    cout << "Operation successful"<<endl;
-
-
+	cout << "Operation successful" << endl;
 
 	//Signing the database public key with the CA private key
 	cout << "Signing the database public key with the CA cert" << endl;
-	sprintf(systemcall, "openssl dgst -sha256 -sign Admin/CAprivate_key.key -out /tmp/sign.sha256 Admin/DBpublic_key.txt%s",cmdout);
+	sprintf(systemcall, "openssl dgst -sha256 -sign Admin/CAprivate_key.key -out /tmp/sign.sha256 Admin/DBpublic_key.txt%s", cmdout);
 	system(systemcall);
 	sprintf(systemcall, "openssl base64 -in /tmp/sign.sha256 -out Admin/DBpublic_key_signed.txt%s", cmdout);
 	system(systemcall);
 
 	cout << "Signing the database private key with the CA cert" << endl;
-	sprintf(systemcall, "openssl dgst -sha256 -sign Admin/CAprivate_key.key -out /tmp/sign.sha256 Admin/DBprivate_key.txt%s",cmdout);
+	sprintf(systemcall, "openssl dgst -sha256 -sign Admin/CAprivate_key.key -out /tmp/sign.sha256 Admin/DBprivate_key.txt%s", cmdout);
 	system(systemcall);
 	sprintf(systemcall, "openssl base64 -in /tmp/sign.sha256 -out Admin/DBprivate_key_signed.txt%s", cmdout);
 	system(systemcall);
 
 	cout << "Signing the database private key with the CA cert" << endl;
-	sprintf(systemcall, "openssl dgst -sha256 -sign Admin/CAprivate_key.key -out /tmp/sign.sha256 Admin/Relin_key.txt%s",cmdout);
+	sprintf(systemcall, "openssl dgst -sha256 -sign Admin/CAprivate_key.key -out /tmp/sign.sha256 Admin/Relin_key.txt%s", cmdout);
 	system(systemcall);
 	sprintf(systemcall, "openssl base64 -in /tmp/sign.sha256 -out Admin/Relin_key_signed.txt%s", cmdout);
 	system(systemcall);
@@ -133,14 +130,13 @@ int main(int argc, char *argv[])
 	// installing the root CA cert
 	sprintf(systemcall, "cp Admin/CAcert.crt Admin/Relin_key.txt Admin/Relin_key_signed.txt Server");
 	system(systemcall);
-	cout<<"Generating Server Private Key and certificate request"<<endl;
-	sprintf(systemcall, "cd Server && openssl genrsa -out server_pk.key 1024%s && openssl req -new -key server_pk.key -out server-cert.csr -subj \"/C=PT/ST=Lisbon/L=Lisbon/O=Cripto/OU=CSC-Project/CN=Server\" %s", cmdout,cmdout);
+	cout << "Generating Server Private Key and certificate request" << endl;
+	sprintf(systemcall, "cd Server && openssl genrsa -out server_pk.key 1024%s && openssl req -new -key server_pk.key -out server-cert.csr -subj \"/C=PT/ST=Lisbon/L=Lisbon/O=Cripto/OU=CSC-Project/CN=Server\" %s", cmdout, cmdout);
 	system(systemcall);
-	cout<<"Signing Server Certificate with CA Private Key"<<endl;
+	cout << "Signing Server Certificate with CA Private Key" << endl;
 	//signing the server key with the CA private key
 	sprintf(systemcall, "cd Server && openssl x509 -req -in server-cert.csr -out server-cert.crt -sha1 -CA CAcert.crt -CAkey ../Admin/CAprivate_key.key -CAcreateserial -days 3650 %s", cmdout);
 	system(systemcall);
-
 
 	cout << "Creating client key pairs and signing them with CA.cert" << endl;
 	for (int i = 1; i <= clientcount; ++i)
@@ -154,13 +150,13 @@ int main(int argc, char *argv[])
 		system(systemcall);
 
 		//generating clients key pairs
-		sprintf(systemcall, "cd Admin && openssl genrsa -out c%dpk.key 1024%s && openssl req -new -key c%dpk.key -out c%d-cert.csr -subj \"/C=PT/ST=Lisbon/L=Lisbon/O=Cripto/OU=CSC-Project/CN=c%d\" %s", i,cmdout, i, i, i,cmdout);
+		sprintf(systemcall, "cd Admin && openssl genrsa -out c%dpk.key 1024%s && openssl req -new -key c%dpk.key -out c%d-cert.csr -subj \"/C=PT/ST=Lisbon/L=Lisbon/O=Cripto/OU=CSC-Project/CN=c%d\" %s", i, cmdout, i, i, i, cmdout);
 		system(systemcall);
 
 		//signing the client private key with the CA private key
-		sprintf(systemcall, "cd Admin && openssl dgst -sha256 -sign CAprivate_key.key -out /tmp/sign.sha256 c%dpk.key %s", i,cmdout);
+		sprintf(systemcall, "cd Admin && openssl dgst -sha256 -sign CAprivate_key.key -out /tmp/sign.sha256 c%dpk.key %s", i, cmdout);
 		system(systemcall);
-		sprintf(systemcall, "cd Admin && openssl base64 -in /tmp/sign.sha256 -out c%dpk_signed.txt %s", i,cmdout);
+		sprintf(systemcall, "cd Admin && openssl base64 -in /tmp/sign.sha256 -out c%dpk_signed.txt %s", i, cmdout);
 		system(systemcall);
 
 		//installing private key into Client dir
@@ -170,12 +166,12 @@ int main(int argc, char *argv[])
 		//converting certificate request into actual certificate and signing it with CA private key
 		sprintf(systemcall, "cd Admin && openssl x509 -req -in c%d-cert.csr -out c%d-cert.crt -sha1 -CA CAcert.crt -CAkey CAprivate_key.key -CAcreateserial -days 3650 %s", i, i, cmdout);
 		system(systemcall);
-		
+
 		cout << "Client Certificate created sucessfully" << endl;
 
-		sprintf(systemcall, "cd Admin && openssl dgst -sha256 -sign CAprivate_key.key -out /tmp/sign.sha256 c%d-cert.crt %s", i,cmdout);
+		sprintf(systemcall, "cd Admin && openssl dgst -sha256 -sign CAprivate_key.key -out /tmp/sign.sha256 c%d-cert.crt %s", i, cmdout);
 		system(systemcall);
-		sprintf(systemcall, "cd Admin && openssl base64 -in /tmp/sign.sha256 -out c%d-cert_signed.txt %s", i,cmdout);
+		sprintf(systemcall, "cd Admin && openssl base64 -in /tmp/sign.sha256 -out c%d-cert_signed.txt %s", i, cmdout);
 		system(systemcall);
 
 		//installing client certificate
@@ -185,6 +181,7 @@ int main(int argc, char *argv[])
 		system(systemcall);
 	}
 
-	cout << "Database is now ready\n" << endl;
+	cout << "Database is now ready\n"
+		 << endl;
 	return 0;
 }

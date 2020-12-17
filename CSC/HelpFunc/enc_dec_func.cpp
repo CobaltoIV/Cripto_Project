@@ -14,6 +14,63 @@ using namespace std;
 using namespace seal;
 
 /**
+ * @brief  Creates file with wanted error message
+ * @note   
+ * @param  error_msg: error message
+ * @retval None
+ */
+void create_msg(string error_msg)
+{
+    ofstream fb;
+    fb.open("Server/Result/msg.txt");
+    fb << error_msg;
+    fb.close();
+}
+
+
+/**
+ * @brief  Check if a directory exists
+ * @note
+ * @param  tablename:
+ * @retval
+ */
+bool chkdir(char *dirpath)
+{
+    DIR *pzDir;
+    bool ret = false;
+
+    pzDir = opendir(dirpath);
+
+    if (pzDir != NULL)
+    {
+        ret = true;
+        (void)closedir(pzDir);
+    }
+
+    return ret;
+}
+/**
+ * @brief
+ * @note
+ * @param  *dirpath:
+ * @retval None
+ */
+bool createdir(char *dirpath)
+{
+    char systemcall[500];
+    if (chkdir(dirpath)) // if directory already exists no need to create
+    {
+        return false;
+    }
+    else // create directory
+    {
+        sprintf(systemcall, "mkdir %s", dirpath);
+        system(systemcall);
+        return true;
+    }
+}
+
+/**
  * @brief  Takes a condition from where and adds it into the condition vectors
  * @note   
  * @param  cond: Condition
@@ -24,7 +81,7 @@ using namespace seal;
  * @param  mode: Vector with the types of previous conditions comparisons
  * @retval None
  */
-void process_cond(string cond, string p, string queriespath, vector<string>* cond_cols, vector<string>* cond_nums, vector<int>* mode)
+bool process_cond(string cond, string p, string queriespath, vector<string> *cond_cols, vector<string> *cond_nums, vector<int> *mode)
 {
     size_t pos;
     stringstream ss;
@@ -40,6 +97,14 @@ void process_cond(string cond, string p, string queriespath, vector<string>* con
     ss << p << "/" << c1;
     col = ss.str();
 
+    char *coldir = &col[0];
+    if (!chkdir(coldir))
+    {
+        system("rm -r Server/Result/*");
+        string err = "ERROR : Collumn " + c1 + " doesn't exist";
+        create_msg(err);
+        return false;
+    }
     // Add it to the vector
     (*cond_cols).push_back(col);
     ss.str(string());
@@ -72,6 +137,8 @@ void process_cond(string cond, string p, string queriespath, vector<string>* con
     ss << queriespath << "/" << num;
     num_dir = ss.str();
     (*cond_nums).push_back(num_dir);
+
+    return true;
 }
 /**
  * @brief  Saves homormophic encrypted
@@ -279,47 +346,6 @@ void enc_int_total(int x, Encryptor *encryptor, char *directory, int n_bit)
     }
 }
 
-/**
- * @brief  Check if a directory exists
- * @note
- * @param  tablename:
- * @retval
- */
-bool chkdir(char *dirpath)
-{
-    DIR *pzDir;
-    bool ret = false;
-
-    pzDir = opendir(dirpath);
-
-    if (pzDir != NULL)
-    {
-        ret = true;
-        (void)closedir(pzDir);
-    }
-
-    return ret;
-}
-/**
- * @brief
- * @note
- * @param  *dirpath:
- * @retval None
- */
-bool createdir(char *dirpath)
-{
-    char systemcall[500];
-    if (chkdir(dirpath)) // if directory already exists no need to create
-    {
-        return false;
-    }
-    else // create directory
-    {
-        sprintf(systemcall, "mkdir %s", dirpath);
-        system(systemcall);
-        return true;
-    }
-}
 string getlinenumber(char *columndir)
 {
     DIR *folder;
@@ -346,7 +372,7 @@ string getlinenumber(char *columndir)
         else if (entry->d_type == DT_DIR) // if the entry is a folder(only folder inside directory would be the bin folder)
         {
             // open directory
-            cout << entry->d_name << endl;
+            //cout << entry->d_name << endl;
             i++;
             last_line = entry->d_name;
         }
