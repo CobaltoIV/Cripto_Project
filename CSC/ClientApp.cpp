@@ -398,7 +398,7 @@ void readResult(string msg, string result_path, SEALContext context, Decryptor *
         }
         else
         {
-            //read_select(msg, context, decryptor)
+            read_select(msg, context, decryptor)
         }
     }
 }
