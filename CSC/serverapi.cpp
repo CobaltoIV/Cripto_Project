@@ -98,7 +98,8 @@ void deleteline(char *tabledir, string line)
     char *linepath, *coldir, *lnum, *newnum, *new_linepath;
     char systemcall[500];
     struct dirent *entry;
-    int l = 1;
+    int l = 1, ent;
+    int lin =  stoi(line);
 
     // open table directory to iterate through entries
     folder = opendir(tabledir);
@@ -156,32 +157,38 @@ void deleteline(char *tabledir, string line)
             }
             else if (entry->d_type == DT_DIR) // if the entry is a folder(only folder inside table directory would be the collumn folder)
             {
-                // open directory
-                cout << entry->d_name << endl; // collumn name
-                linenum = entry->d_name;
-                lnum = &linenum[0];
+                ent = stoi(entry->d_name);
 
-                new_l = to_string(l);
-                newnum = &new_l[0];
-                ss << c << "/" << new_l;
-                new_fullpath = ss.str();
-                new_linepath = &new_fullpath[0];
+                if(ent >= lin)
+                {
+                    // open directory
+                    //cout << entry->d_name << endl; // collumn name
+                    linenum = entry->d_name;
+                    lnum = &linenum[0];
 
-                ss.str(string());
-                // Get fullpath for number in entry
-                ss << c << "/" << linenum;
-                fullpath = ss.str();
-                linepath = &fullpath[0];
-                cout << fullpath << endl;
-                // Delete entry from collumn
-                sprintf(systemcall, "mv %s/%s.hex %s/%s.hex", linepath, lnum, linepath, newnum);
-                system(systemcall);
+                    new_l = to_string(l);
+                    newnum = &new_l[0];
+                    ss << c << "/" << new_l;
+                    new_fullpath = ss.str();
+                    new_linepath = &new_fullpath[0];
 
-                sprintf(systemcall, "mv %s %s", linepath, new_linepath);
-                system(systemcall);
-                //Clear contents of previous
-                fullpath.clear();
-                ss.str(string());
+                    ss.str(string());
+                    // Get fullpath for number in entry
+                    ss << c << "/" << linenum;
+                    fullpath = ss.str();
+                    linepath = &fullpath[0];
+                    //cout << fullpath << endl;
+                    // Delete entry from collumn
+                    sprintf(systemcall, "mv %s/%s.hex %s/%s.hex", linepath, lnum, linepath, newnum);
+                    system(systemcall);
+
+                    sprintf(systemcall, "mv %s %s", linepath, new_linepath);
+                    system(systemcall);
+                    //Clear contents of previous
+                    fullpath.clear();
+                    ss.str(string());
+                    
+                }
                 l++;
             }
         }
@@ -1625,7 +1632,7 @@ int main(int argc, char *argv[])
         cout << "Invalid Query signature" << endl;
         exit(1);
     }
-    SEALContext context = create_context(8192, 128);
+    SEALContext context = create_context(16384, 64);
 
     RelinKeys relin_keys;
 
