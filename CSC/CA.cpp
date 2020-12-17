@@ -49,10 +49,10 @@ int main(int argc, char *argv[])
 	system("rm -r Clients");
 	//SEAL inits and keys generation used throughout the election process
 	EncryptionParameters parms(scheme_type::bfv);
-	size_t poly_modulus_degree = 8192;
+	size_t poly_modulus_degree = 16384;
 	parms.set_poly_modulus_degree(poly_modulus_degree);
 	parms.set_coeff_modulus(CoeffModulus::BFVDefault(poly_modulus_degree));
-	parms.set_plain_modulus(128);
+	parms.set_plain_modulus(64);
 	SEALContext context(parms);
 	KeyGenerator keygen(context);
 	PublicKey public_key;

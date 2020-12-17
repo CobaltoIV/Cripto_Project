@@ -26,7 +26,7 @@ int n_client;
 
 /**
  * @brief  retrives console output
- * @note   
+ * @note
  * @param  cmd: Commend to be executed
  * @retval String with console output
  */
@@ -55,12 +55,12 @@ string exec(const char *cmd)
 
 /**
  * @brief  Verifies signature of a file according to an authority
- * @note   
+ * @note
  * @param  directory: Directory where the file is found
  * @param  filename: Filename
  * @param  signedfile: Filename signed by the authority through SHA256 digest function
  * @param  authority: Authority which signed the file
- * @retval boolean 
+ * @retval boolean
  */
 
 string verifysgn(char *directory, char *filename, char *signedfile, char *authority)
@@ -77,8 +77,8 @@ string verifysgn(char *directory, char *filename, char *signedfile, char *author
 
 /**
  * @brief  checks if a file exists
- * @note   
- * @param   
+ * @note
+ * @param
  * @retval 1 if the file exists, 0 if it doesn't
  */
 int fileExists(string filename, string directory)
@@ -210,8 +210,6 @@ void print_select(char *tabledir, SEALContext context, Decryptor *decryptor)
     string fullpath, c, linenum, cp, col, numpath, num;
     vector<string> cols;
     char *auxpath, *coldir, *n, *npath;
-    string help = "comp.res";
-    char *compfile = &help[0];
     char systemcall[500];
     Ciphertext pos;
     Plaintext result;
@@ -247,7 +245,12 @@ void print_select(char *tabledir, SEALContext context, Decryptor *decryptor)
     }
     closedir(folder);
     cout << endl;
-    
+
+    col = cols[0];
+    coldir = &col[0];
+
+
+    folder = opendir(coldir);
     if (folder == NULL)
     {
         perror("Unable to read directory");
@@ -387,6 +390,7 @@ void readResult(string msg, string result_path, SEALContext context, Decryptor *
         char *filename = &file[0];
         res = load_hom_enc(dir, filename, context);
         (*decryptor).decrypt(res, result);
+        cout << "SUM = " << result.to_string() << endl;
         cout << "SUM = " << h2d(result.to_string()) << endl;
     }
     else if (msg.find(sel) != string::npos)
@@ -398,7 +402,7 @@ void readResult(string msg, string result_path, SEALContext context, Decryptor *
         }
         else
         {
-            //read_select(msg, context, decryptor)
+            read_select(msg, result_path, context, decryptor);
         }
     }
 }
@@ -481,7 +485,7 @@ void checkResult(SEALContext context, Decryptor *decryptor)
     system(systemcall);
 }
 
-void encryptValues(string values, int option)
+void encryptValues(string values, SEALContext context, Encryptor* encryptor, int option)
 {
 
     char filename[100];
@@ -489,16 +493,6 @@ void encryptValues(string values, int option)
     char directory[50];
     string output = " ";
     int n_bit = 4;
-
-    //Get DB public key and create encryptor
-    SEALContext context = create_context(8192, 128);
-    PublicKey public_key;
-    fstream keyfile;
-    sprintf(filename, "Clients/Client%d/DBpublic_key.txt", n_client);
-    keyfile.open(filename, fstream::binary | fstream::in);
-    public_key.load(context, keyfile);
-    keyfile.close();
-    Encryptor encryptor(context, public_key);
 
     //Variables for value processing
     string delimiter = " ";
@@ -511,7 +505,7 @@ void encryptValues(string values, int option)
     {
         int_token = stoi(values);
         sprintf(directory, "Value%d", option);
-        enc_int_total(int_token, &encryptor, directory, n_bit);
+        enc_int_total(int_token, encryptor, directory, n_bit);
         sprintf(systemcall, "mv Value%d Client%dQuery", option, n_client);
         system(systemcall);
         output.append(directory);
@@ -528,7 +522,7 @@ void encryptValues(string values, int option)
             values.erase(0, pos + delimiter.length());
             int_token = stoi(token);
             sprintf(directory, "Value%d", i);
-            enc_int_total(int_token, &encryptor, directory, n_bit);
+            enc_int_total(int_token, encryptor, directory, n_bit);
             sprintf(systemcall, "mv Value%d Client%dQuery", i, n_client);
             system(systemcall);
 
@@ -544,7 +538,7 @@ void encryptValues(string values, int option)
     out.close();
 }
 
-int select_sum(string sql, string colname)
+int select_sum(string sql, SEALContext context, Encryptor* encryptor, string colname)
 {
     string delimiter = " ";
     size_t pos = 0;
@@ -622,7 +616,7 @@ int select_sum(string sql, string colname)
     pos = sql.find(delimiter);
     token = sql.substr(0, pos);
     sql.erase(0, pos + delimiter.length());
-    encryptValues(token, 1);
+    encryptValues(token, context, encryptor,1);
 
     //Get the logical operator (AND or OR)
     pos = sql.find(delimiter);
@@ -662,31 +656,40 @@ int select_sum(string sql, string colname)
     pos = sql.find(delimiter);
     token = sql.substr(0, pos);
     sql.erase(0, pos + delimiter.length());
-    encryptValues(token, 2);
+    encryptValues(token, context,encryptor, 2);
 
     return 0;
 }
 
-int select_query(string sql, string col1name)
+int select_query(string sql,SEALContext context, Encryptor* encryptor, string col1name)
 {
     cout << "query" << endl;
     size_t pos = 0;
-    string delimiter = "FROM ";
+    string delimiter = ",";
     string output = "SELECT ";
     string token = "";
 
+    //Check if the col name has a coma
+    pos = col1name.find(delimiter);
+    if (pos != col1name.npos){
+        col1name = col1name.substr(0, pos);
+    }
     //Append the 1st column's name
     output.append(col1name);
 
     //Get the colnames
+    delimiter = "FROM ";
     pos = sql.find(delimiter);
     string colnames = sql.substr(0, pos);
     sql.erase(0, pos + delimiter.length());
     //Exit if the program is unable to get the word FROM from the command
-    if (sql.npos == pos || pos == 0)
+    if (sql.npos == pos)
     {
         return -1;
     }
+
+    cout << "col1name:" << col1name << "|" << endl;
+
 
     delimiter = ", ";
     while ((pos = colnames.find(delimiter)) != colnames.npos)
@@ -707,8 +710,10 @@ int select_query(string sql, string col1name)
     delimiter = " ";
     pos = colnames.find(delimiter);
     token = colnames.substr(0, pos);
-    output.append(" ");
-    output.append(token);
+    if (!token.empty()){
+        output.append(" ");
+        output.append(token);
+    }
 
     //Append the word FROM to the output string
     output.append(" FROM ");
@@ -717,11 +722,7 @@ int select_query(string sql, string col1name)
     pos = sql.find(delimiter);
     token = sql.substr(0, pos);
     sql.erase(0, pos + delimiter.length());
-    //Exit if the program is unable to get the tablename from the command
-    if (sql.npos == pos || pos == 0)
-    {
-        return -1;
-    }
+
     output.append(token);
     output.append(" ");
 
@@ -730,8 +731,13 @@ int select_query(string sql, string col1name)
     out << output;
     out.close();
 
-    output = "";
+    //Exit if the program is unable to get the tablename from the command
+    if (sql.npos == pos)
+    {
+        return 0;
+    }
 
+    output = "";
     //Get the word WHERE from the command
     pos = sql.find(delimiter);
     token = sql.substr(0, pos);
@@ -769,7 +775,7 @@ int select_query(string sql, string col1name)
     pos = sql.find(delimiter);
     token = sql.substr(0, pos);
     sql.erase(0, pos + delimiter.length());
-    encryptValues(token, 1);
+    encryptValues(token, context, encryptor, 1);
 
     //Get the logical operator (AND or OR)
     pos = sql.find(delimiter);
@@ -809,7 +815,7 @@ int select_query(string sql, string col1name)
     pos = sql.find(delimiter);
     token = sql.substr(0, pos);
     sql.erase(0, pos + delimiter.length());
-    encryptValues(token, 2);
+    encryptValues(token, context, encryptor, 2);
 
     return 0;
 }
@@ -865,7 +871,7 @@ int select_line(string sql)
     return 0;
 }
 
-int select(string sql)
+int select(string sql, SEALContext context, Encryptor* encryptor, string col1name)
 {
     string delimiter = " ";
     size_t pos = 0;
@@ -891,14 +897,14 @@ int select(string sql)
     if (pos = token.find(delimiter) != token.npos)
     {
         colname = token.substr(4, (token.length() - 5));
-        return select_sum(sql, colname);
+        return select_sum(sql, context, encryptor, colname);
     }
 
     delimiter = ",";
     if (token.find((delimiter)))
     {
-        colname = token.substr(0, token.length() - 1);
-        return select_query(sql, colname);
+        colname = token.substr(0, token.length());
+        return select_query(sql, context, encryptor, colname);
     }
     return -1;
 }
@@ -954,7 +960,7 @@ int delete_row(string sql)
     return 0;
 }
 
-int insert(string sql)
+int insert(string sql, SEALContext context, Encryptor* encryptor)
 {
     string delimiter = " ";
     size_t pos = 0;
@@ -1140,7 +1146,7 @@ int insert(string sql)
     ofstream out("msg.txt");
     out << output;
     out.close();
-    encryptValues(values, 0);
+    encryptValues(values, context, encryptor, 0);
 
     return 0;
 }
@@ -1268,7 +1274,7 @@ int create(string sql)
     return 0;
 }
 
-int handleQuery(string sql)
+int handleQuery(string sql,SEALContext context, Encryptor* encryptor)
 {
     string delimiter = " ";
     size_t pos = 0;
@@ -1292,7 +1298,7 @@ int handleQuery(string sql)
 
     else if (token.compare("INSERT") == 0)
     {
-        return insert(sql);
+        return insert(sql, context, encryptor);
     }
 
     else if (token.compare("DELETE") == 0)
@@ -1302,7 +1308,7 @@ int handleQuery(string sql)
 
     else if (token.compare("SELECT") == 0)
     {
-        return select(sql);
+        return select(sql, context, encryptor, token);
     }
 
     else
@@ -1319,6 +1325,9 @@ void deleteResidues()
     system(systemcall);
 
     sprintf(systemcall, "cd Clients/Client%d && rm msg.txt 2>/dev/null && rm signed_digest%d.txt 2>/dev/null && rm Client%dQuery.zip 2>/dev/null", n_client, n_client, n_client);
+    system(systemcall);
+
+    sprintf(systemcall, "cd Clients/Client%d && rm -r Result 2>/dev/null", n_client);
     system(systemcall);
 }
 
@@ -1398,7 +1407,7 @@ int main(int argc, char *argv[])
         exit(1);
     }
 
-    SEALContext context = create_context(8192, 128);
+    SEALContext context = create_context(16384, 64);
     PublicKey public_key;
     SecretKey secret_key;
     fstream keyfile;
@@ -1438,7 +1447,7 @@ int main(int argc, char *argv[])
         system(systemcall);
 
         //Repeat loop if the command is invalid
-        if (handleQuery(sql) == -1)
+        if (handleQuery(sql, context, &encryptor) == -1)
         {
             cerr << "Invalid command" << endl;
             sprintf(systemcall, "rm -r Client%dQuery", n_client);
@@ -1504,7 +1513,7 @@ int main(int argc, char *argv[])
         sprintf(systemcall, "cd Clients/Client%d && openssl base64 -in /tmp/sign.sha256 -out signed_digest.txt %s", n_client,cmdout);
         system(systemcall);
 
-        //Bundle query 
+        //Bundle query
         sprintf(systemcall, "cd Clients/Client%d && mv msg_enc.txt signed_digest.txt ../../Client%dQuery", n_client, n_client);
         system(systemcall);
         */
