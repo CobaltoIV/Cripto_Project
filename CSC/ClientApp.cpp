@@ -403,6 +403,7 @@ void readResult(string msg, string result_path, SEALContext context, Decryptor *
         else
         {
             read_select(msg, result_path, context, decryptor);
+
         }
     }
 }
