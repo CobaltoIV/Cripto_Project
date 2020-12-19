@@ -47,7 +47,7 @@ int main(int argc, char *argv[])
 	system("rm -r Admin");
 	system("rm -r Server");
 	system("rm -r Clients");
-	//SEAL inits and keys generation used throughout the election process
+	//SEAL keys generation
 	EncryptionParameters parms(scheme_type::bfv);
 	size_t poly_modulus_degree = 16384;
 	parms.set_poly_modulus_degree(poly_modulus_degree);
@@ -60,7 +60,7 @@ int main(int argc, char *argv[])
 	SecretKey private_key = keygen.secret_key();
 	RelinKeys relin_keys;
 	keygen.create_relin_keys(relin_keys);
-	//saving keys to txt files
+	//saving keys 
 	cout << "Creating SEAL keys\n"
 		 << endl;
 	fstream fs("DBpublic_key.txt", fstream::binary | fstream::out);
@@ -97,6 +97,7 @@ int main(int argc, char *argv[])
 	system("mkdir Clients");
 
 	cout << "Clients created" << endl;
+	// move DB keys to the Admin folder
 	system("mv DBpublic_key.txt Admin");
 	system("mv DBprivate_key.txt Admin");
 	system("mv Relin_key.txt Admin");
@@ -105,36 +106,35 @@ int main(int argc, char *argv[])
 	cout << "Generating CA cert" << endl;
 	sprintf(systemcall, "openssl req -x509 -sha256 -nodes -days 365 -newkey rsa:2048 -keyout CAprivate_key.key -out CAcert.crt -subj \"/C=PT/ST=Lisbon/L=Lisbon/O=Cripto/OU=CSC-Project/CN=CA\"%s && mv CAprivate_key.key CAcert.crt Admin", cmdout);
 	system(systemcall);
-	cout << "Operation successful" << endl;
 
 	//Signing the database public key with the CA private key
-	cout << "Signing the database public key with the CA cert" << endl;
+	cout << "Signing the database public key with the CA key" << endl;
 	sprintf(systemcall, "openssl dgst -sha256 -sign Admin/CAprivate_key.key -out /tmp/sign.sha256 Admin/DBpublic_key.txt%s", cmdout);
 	system(systemcall);
 	sprintf(systemcall, "openssl base64 -in /tmp/sign.sha256 -out Admin/DBpublic_key_signed.txt%s", cmdout);
 	system(systemcall);
 
-	cout << "Signing the database private key with the CA cert" << endl;
+	cout << "Signing the database private key with the CA key" << endl;
 	sprintf(systemcall, "openssl dgst -sha256 -sign Admin/CAprivate_key.key -out /tmp/sign.sha256 Admin/DBprivate_key.txt%s", cmdout);
 	system(systemcall);
 	sprintf(systemcall, "openssl base64 -in /tmp/sign.sha256 -out Admin/DBprivate_key_signed.txt%s", cmdout);
 	system(systemcall);
 
-	cout << "Signing the database private key with the CA cert" << endl;
+	cout << "Signing the database private key with the CA key" << endl;
 	sprintf(systemcall, "openssl dgst -sha256 -sign Admin/CAprivate_key.key -out /tmp/sign.sha256 Admin/Relin_key.txt%s", cmdout);
 	system(systemcall);
 	sprintf(systemcall, "openssl base64 -in /tmp/sign.sha256 -out Admin/Relin_key_signed.txt%s", cmdout);
 	system(systemcall);
 
-	// generate server key pair
-	// installing the root CA cert
+
+	// installing the root CA cert and Relinearization keys
 	sprintf(systemcall, "cp Admin/CAcert.crt Admin/Relin_key.txt Admin/Relin_key_signed.txt Server");
 	system(systemcall);
 	cout << "Generating Server Private Key and certificate request" << endl;
 	sprintf(systemcall, "cd Server && openssl genrsa -out server_pk.key 1024%s && openssl req -new -key server_pk.key -out server-cert.csr -subj \"/C=PT/ST=Lisbon/L=Lisbon/O=Cripto/OU=CSC-Project/CN=Server\" %s", cmdout, cmdout);
 	system(systemcall);
 	cout << "Signing Server Certificate with CA Private Key" << endl;
-	//signing the server key with the CA private key
+	//Signing the server certificate with the CA private key
 	sprintf(systemcall, "cd Server && openssl x509 -req -in server-cert.csr -out server-cert.crt -sha1 -CA CAcert.crt -CAkey ../Admin/CAprivate_key.key -CAcreateserial -days 3650 %s", cmdout);
 	system(systemcall);
 
@@ -167,7 +167,6 @@ int main(int argc, char *argv[])
 		sprintf(systemcall, "cd Admin && openssl x509 -req -in c%d-cert.csr -out c%d-cert.crt -sha1 -CA CAcert.crt -CAkey CAprivate_key.key -CAcreateserial -days 3650 %s", i, i, cmdout);
 		system(systemcall);
 
-		cout << "Client Certificate created sucessfully" << endl;
 
 		sprintf(systemcall, "cd Admin && openssl dgst -sha256 -sign CAprivate_key.key -out /tmp/sign.sha256 c%d-cert.crt %s", i, cmdout);
 		system(systemcall);

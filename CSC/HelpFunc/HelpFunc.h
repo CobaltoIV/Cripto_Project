@@ -22,6 +22,15 @@
 using namespace std;
 using namespace seal;
 
+
+/**
+ * @brief  Retrives console output from an input command
+ * @note
+ * @param  cmd: Command to be executed
+ * @retval String with console output
+ */
+string exec(const char *cmd);
+
 /**
  * @brief  Creates file with wanted error message
  * @note   
@@ -53,12 +62,12 @@ bool process_cond(string cond, string p, string queriespath, vector<string>* con
 void save_hom_enc(Ciphertext x, char *dir, char *filename);
 
 /**
- * @brief  
- * @note   
- * @param  *dir: 
- * @param  *filename: 
- * @param  context: 
- * @retval 
+ * @brief Loads a Ciphertext from a file
+ * 
+ * @param dir 
+ * @param filename 
+ * @param context 
+ * @return Ciphertext 
  */
 Ciphertext load_hom_enc(char *dir, char *filename, SEALContext context);
 
@@ -69,7 +78,12 @@ Ciphertext load_hom_enc(char *dir, char *filename, SEALContext context);
  */
 SEALContext create_context(int p_m_degree, int p_mod);
 
-
+/**
+ * @brief Takes a decimal number (int) and converts it into an hexadecimal string
+ * 
+ * @param x 
+ * @return string 
+ */
 string d2h(int x);
 
 /**
@@ -127,9 +141,9 @@ void enc_int_total(int x, Encryptor *encryptor, char *directory, int n_bit);
 /**
  * @brief Loads an homormophic encrypted number into its respective Ciphertext and vector of Ciphertexts for hexadecimal and binary version
  * 
- * @param x_hex 
- * @param bin 
- * @param directory 
+ * @param x_hex Ciphertext which will hold the hexadecimal encryption
+ * @param bin vector<Ciphertext> which will hold the binary encryption
+ * @param directory  directory of folder with the number encrypted
  * @param context 
  */
 void dec_int_total(Ciphertext* x_hex, vector<Ciphertext>* bin, char* directory, SEALContext context);

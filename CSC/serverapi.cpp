@@ -70,7 +70,7 @@ bool selectline(char *tabledir, string line, char *tablename)
             ss << "/" << line;
             fullpath = ss.str();
             linepath = &fullpath[0];
-
+            // If line doesn't exist
             if (!chkdir(linepath))
             {
                 system("rm -r Server/Result/*");
@@ -92,7 +92,7 @@ bool selectline(char *tabledir, string line, char *tablename)
 
 /**
  * @brief Takes in a line number and deletes it from the table
- * 
+ *
  * @param tabledir: Table path
  * @param line: line numer
  * @return true: In case of sucessfull operation
@@ -126,14 +126,14 @@ bool deleteline(char *tabledir, string line)
         }
         else if (entry->d_type == DT_DIR) // if the entry is a folder(only folder inside table directory would be the collumn folder)
         {
-            // open directory
-            //cout << entry->d_name << endl; // collumn name
-            // Get fullpath for number in entry
+
+            // Get fullpath for line
             ss << tabledir << "/" << entry->d_name;
-            cols.push_back(ss.str());
+            cols.push_back(ss.str()); // create vector with collumn names for renaming lines after the deletion
             ss << "/" << line;
             fullpath = ss.str();
             linepath = &fullpath[0];
+            // If line doesn't exist
             if (!chkdir(linepath))
             {
                 string err = "ERROR : Invalid Line";
@@ -153,7 +153,8 @@ bool deleteline(char *tabledir, string line)
     // Rename lines
     for (int i = 0; i < cols.size(); i++)
     {
-        l = 1;
+        l = 1; // Variable which holds the correct collumn number
+        // open collumn
         c = cols[i];
         coldir = &c[0];
         folder = opendir(coldir);
@@ -169,17 +170,17 @@ bool deleteline(char *tabledir, string line)
             {
                 // do nothing (straight logic)
             }
-            else if (entry->d_type == DT_DIR) // if the entry is a folder(only folder inside table directory would be the collumn folder)
+            else if (entry->d_type == DT_DIR) // if the entry is a folder(only folder inside table directory would be the line folder)
             {
+                // get line number
                 ent = stoi(entry->d_name);
-
+                // if line number is bigger than the number of the line which was deleted the line folder needs to be renamed
                 if (ent >= lin)
                 {
-                    // open directory
-                    //cout << entry->d_name << endl; // collumn name
+                    // Get current line number in string format
                     linenum = entry->d_name;
                     lnum = &linenum[0];
-
+                    // Get the new line number
                     new_l = to_string(l);
                     newnum = &new_l[0];
                     ss << c << "/" << new_l;
@@ -187,15 +188,15 @@ bool deleteline(char *tabledir, string line)
                     new_linepath = &new_fullpath[0];
 
                     ss.str(string());
-                    // Get fullpath for number in entry
+                    // Get fullpath for the line folder
                     ss << c << "/" << linenum;
                     fullpath = ss.str();
                     linepath = &fullpath[0];
-                    //cout << fullpath << endl;
-                    // Delete entry from collumn
+
+                    // Rename files inside
                     sprintf(systemcall, "mv %s/%s.hex %s/%s.hex", linepath, lnum, linepath, newnum);
                     system(systemcall);
-
+                    // Rename the whole folder
                     sprintf(systemcall, "mv %s %s", linepath, new_linepath);
                     system(systemcall);
                     //Clear contents of previous
@@ -251,7 +252,7 @@ void sumcolumn(char *columndir, SEALContext context, Evaluator *evaluator, Relin
             ss << columndir << "/" << entry->d_name;
             fullpath = ss.str();
             dirpath = &fullpath[0];
-            // load entry encryptons into x_hex and x_bin variables
+            // load encrypted entry into x_hex and x_bin variables
             dec_int_total(&x_hex, &x_bin, dirpath, context);
             if (first)
             {
@@ -275,17 +276,18 @@ void sumcolumn(char *columndir, SEALContext context, Evaluator *evaluator, Relin
     resultdir = &auxdir[0];
     auxfile = "sum.res";
     resultfile = &auxfile[0];
-    // Copy result of the comparison to the folder with the respective number
+    // Save the result of the sum to the folder with the Result of the Query
     save_hom_enc(sum_total, resultdir, resultfile);
 }
 
 /**
  * @brief  Takes a collumn and a group of conditions. Sums the collumn according to the conditions
  * @note   Function is supposed to be called in SELECT SUM queries with where
- * @param  *columndir: Path to collumn
- * @param  cond_cols: vector with collumns in conditions
- * @param  modes: vector with types of comparisons
- * @param  cond_nums: vectot with numbers to be compared
+ * @param  *columndir: Path to the collumn to be summed
+ * @param  cond_cols: Vector with the collumns affected by the conditions inserted by the Client
+ * @param  modes: vector of ints. Ranging between 0 and 2 each number indicates which of the bits of the result of the comparator we should use
+ *  0 => gt || 1 => equals || 2 => lt
+ * @param  cond_nums: Vector with the paths to the numbers inserted by the Client in the query
  * @param  context:
  * @param  *evaluator:
  * @param  relinks:
@@ -320,39 +322,32 @@ void sumcolumn_where(char *columndir, vector<string> cond_cols, vector<int> mode
         }
         else if (entry->d_type == DT_DIR) // if the entry is a folder(corresponds to a line)
         {
-            // Run through conditions for this line
+            // Execute comparisons for every line
             for (int i = 0; i < cond_cols.size(); i++)
             {
-                // Get line from the col
+                // Get the path to the line in the collumn affected by condition
                 col = cond_cols[i];
                 ss << col << "/" << entry->d_name;
                 col_line = ss.str();
                 col_line_dir = &col_line[0];
 
-                //cout << col_line << endl;
-                //cout << col << endl;
-                // Get number to be compared
+                // Get number to be compared (Inserted by Client in query)
                 num = cond_nums[i];
                 numdir = &num[0];
                 // Load numbers
                 dec_int_total(&num_hex, &num_bin, numdir, context);
                 dec_int_total(&col_hex, &col_bin, col_line_dir, context);
-                //Compare
-                cout << "OUTPUT CALC" << endl;
+                // Compare
+                cout << "COMP CALC" << endl;
                 output = full_homomorphic_comparator(col_bin, num_bin, evaluator, relinks);
 
                 if (i == 0)
-                    comp = output[modes[i]]; // If it's the first condition just don't need to multiply
+                    comp = output[modes[i]]; // If it's the first condition just don't need to combine yet
                 else
                 {
                     if (comptype == 0) // AND
                     {
                         comp = AND(comp, output[modes[i]], evaluator, relinks);
-                        /*
-                    // Multiply with the result from the previous condition
-                    (*evaluator).multiply_inplace(comp, output[modes[i]]);
-                    (*evaluator).relinearize_inplace(comp, relinks);
-                    */
                     }
                     else // OR
                     {
@@ -365,13 +360,10 @@ void sumcolumn_where(char *columndir, vector<string> cond_cols, vector<int> mode
                 ss.str(string());
             }
 
-            //c out << entry->d_name << endl;
-
             // Get fullpath for number in entry
             ss << columndir << "/" << entry->d_name;
             fullpath = ss.str();
             dirpath = &fullpath[0];
-            //cout << dirpath << endl;
 
             // Load entry into x_hex and x_bin variables
             dec_int_total(&x_hex, &x_bin, dirpath, context);
@@ -410,9 +402,10 @@ void sumcolumn_where(char *columndir, vector<string> cond_cols, vector<int> mode
 /**
  * @brief  Takes a group of conditrions and saves their results into the Server/Result/Comp folder per line
  * @note   Function is supposed to be called in SELECT queries with where
- * @param  cond_cols:
- * @param  modes:
- * @param  cond_nums:
+ * @param  cond_cols: Vector with the collumns affected by the conditions inserted by the Client
+ * @param  modes: vector of ints. Ranging between 0 and 2 each number indicates which of the bits of the result of the comparator we should use
+ *  0 => gt || 1 => equals || 2 => lt
+ * @param  cond_nums: Vector with the paths to the numbers inserted by the Client in the query
  * @param  context:
  * @param  *evaluator:
  * @param  relinks:
@@ -427,11 +420,11 @@ void selectcollumn_where(vector<string> cond_cols, vector<int> modes, vector<str
     char systemcall[500];
     struct dirent *entry;
 
-    // Create filename
+    // Create filename which holds the condition comparison result
     string file = "comp.res";
     char *filename = &file[0];
 
-    // Get directory to any collumn (just to iterate through lines)
+    // Get directory to any collumn (just to iterate through the lines)
     fullpath = cond_cols[0];
     char *columndir = &fullpath[0];
 
@@ -464,8 +457,6 @@ void selectcollumn_where(vector<string> cond_cols, vector<int> modes, vector<str
                 ss << col << "/" << entry->d_name;
                 col_line = ss.str();
                 col_line_dir = &col_line[0];
-                //cout << col_line << endl;
-                //cout << col << endl;
 
                 // Get number to be compared
                 num = cond_nums[i];
@@ -475,7 +466,7 @@ void selectcollumn_where(vector<string> cond_cols, vector<int> modes, vector<str
                 dec_int_total(&num_hex, &num_bin, numdir, context);
                 dec_int_total(&col_hex, &col_bin, col_line_dir, context);
                 // Compare
-                cout << "OUTPUT CALC" << endl;
+                cout << "COMP CALC" << endl;
                 output = full_homomorphic_comparator(col_bin, num_bin, evaluator, relinks);
 
                 if (i == 0)
@@ -485,11 +476,6 @@ void selectcollumn_where(vector<string> cond_cols, vector<int> modes, vector<str
                     if (comptype == 0) // AND
                     {
                         comp = AND(comp, output[modes[i]], evaluator, relinks);
-                        /*
-                    // Multiply with the result from the previous condition
-                    (*evaluator).multiply_inplace(comp, output[modes[i]]);
-                    (*evaluator).relinearize_inplace(comp, relinks);
-                    */
                     }
                     else // OR
                     {
@@ -500,8 +486,6 @@ void selectcollumn_where(vector<string> cond_cols, vector<int> modes, vector<str
                 col_bin.clear();
                 ss.str(string());
             }
-
-            //cout << entry->d_name << endl;
 
             // Create folder to save line comparison
             sprintf(systemcall, "mkdir Server/Result/Comp/%s", entry->d_name);
@@ -536,7 +520,7 @@ void selectline_exec(string query)
     pos = query.find(delimiter);
     temp = query.substr(0, pos);
     query.erase(0, pos + delimiter.length());
-    // Get the line to be summed
+    // Get the line to be selected
     pos = query.find(linedelimiter);
     line = query.substr(0, pos);
     query.erase(0, pos + linedelimiter.length());
@@ -558,9 +542,10 @@ void selectline_exec(string query)
         return;
     }
 
+    // Create directory in Result for the table
     sprintf(systemcall, "mkdir Server/Result/%s", tablename);
     system(systemcall);
-    // Sum the collumn and save result into Server/Result/sum.res
+    // get line into the Result folder
     if (!selectline(tabledir, line, tablename))
         return;
 
@@ -645,16 +630,18 @@ void select_exec_where1(string query, string queriespath, SEALContext context, E
 
         ss.str(string());
     }
-    // Process conditions in where
+    // Process condition in where
     if (!process_cond(query, p, queriespath, &cond_cols, &cond_nums, &mode))
         return;
-    // Execute comparisons in conditions and save them to be read in the Client side
+    // Execute comparisons in condition and save them to be read in the Client side
     selectcollumn_where(cond_cols, mode, cond_nums, context, evaluator, relinks, 0);
 
     ss << "SELECT WHERE " << table;
     string m = ss.str();
     create_msg(m);
 }
+
+
 
 /**
  * @brief  Process SELECT query string with 2 condition and execute query
@@ -664,7 +651,7 @@ void select_exec_where1(string query, string queriespath, SEALContext context, E
  * @param  context:
  * @param  *evaluator:
  * @param  relinks:
- * @retval None
+ * @param comptype : If the conditions are in an AND or OR (conjuction or disjunction)
  */
 void select_exec_where2(string query, string queriespath, SEALContext context, Evaluator *evaluator, RelinKeys relinks, int comptype)
 {
@@ -733,6 +720,7 @@ void select_exec_where2(string query, string queriespath, SEALContext context, E
             return;
         }
 
+        // copy collumn to the table folder
         sprintf(systemcall, "cp -r %s Server/Result/%s ", coldir, tablename);
         system(systemcall);
 
@@ -903,10 +891,8 @@ void insert_exec(string query, string queriespath)
 
         // Get name of the .hex encryption so we can alter it to the number of the line
 
-        //std::cout << "Splitting: " << value << endl;
         unsigned found = value.find_last_of("/\\");
-        //std::cout << " path: " << value.substr(0, found) << endl;
-        //std::cout << " file: " << value.substr(found + 1) << endl;
+
         valuename = value.substr(found + 1);
         valuehex = &valuename[0];
 
@@ -1083,7 +1069,6 @@ void sum_exec_where1(string query, string queriespath, SEALContext context, Eval
     char systemcall[500];
     char *coldir, *tablename;
 
-    //cout << query << "94u40707" << endl;
     // get the SUM token out
     pos = query.find(delimiter);
     temp = query.substr(0, pos);
@@ -1161,7 +1146,6 @@ void sum_exec_where2(string query, string queriespath, SEALContext context, Eval
     char systemcall[500];
     char *coldir, *tablename;
 
-    //cout << query << "94u40707" << endl;
     // get the SUM token out
     pos = query.find(delimiter);
     temp = query.substr(0, pos);
@@ -1190,9 +1174,9 @@ void sum_exec_where2(string query, string queriespath, SEALContext context, Eval
     // Get directory of collumn
     ss << p << "/" << col;
     c = ss.str();
-    //cout << c << endl;
+
     coldir = &c[0];
-    //cout << coldir << endl;
+
     ss.str(string());
     if (!chkdir(coldir))
     {
@@ -1204,8 +1188,6 @@ void sum_exec_where2(string query, string queriespath, SEALContext context, Eval
     pos = query.find(conddelimiter);
     cond1 = query.substr(0, pos);
     query.erase(0, pos + conddelimiter.length());
-
-    //cout << cond1 << " First cond" << endl;
 
     if (!process_cond(cond1, p, queriespath, &cond_cols, &cond_nums, &mode))
         return;
@@ -1366,35 +1348,6 @@ void query_exec(string query, string queriespath, SEALContext context, Evaluator
 }
 
 /**
- * @brief  Retrives console output from an input command
- * @note
- * @param  cmd: Command to be executed
- * @retval String with console output
- */
-string exec(const char *cmd)
-{
-    char buffer[128];
-    string result = "";
-    FILE *pipe = popen(cmd, "r");
-    if (!pipe)
-        throw runtime_error("popen() failed!");
-    try
-    {
-        while (fgets(buffer, sizeof buffer, pipe) != NULL)
-        {
-            result += buffer;
-        }
-    }
-    catch (...)
-    {
-        pclose(pipe);
-        throw;
-    }
-    pclose(pipe);
-    return result;
-}
-
-/**
  * @brief  Verifies signature of a file according to an authority
  * @note
  * @param  directory: Directory where the file is found
@@ -1419,7 +1372,6 @@ int main(int argc, char *argv[])
 {
     int clientcount = 0, i = 0;
     string sql, query;
-    char cmdout[256] = "";
     char systemcall[512] = "";
     char directory[50] = "";
     char filename[50] = "";
@@ -1431,11 +1383,9 @@ int main(int argc, char *argv[])
     {
         if (strcmp(argv[k], "-cid") == 0)
             i = atoi(argv[++k]);
-        //if (strcmp(argv[i], "-o") == 0) //verbose mode, using /dev/null to suppress console output
-        //	strcpy(cmdout, " > /dev/null 2>&1");
     }
 
-    //Verify client certificate
+    //Verify Client Certificate was signed by the CA
     sprintf(directory, "Server");
     sprintf(filename, "c%d-cert.crt", i);
     sprintf(signedfile, "c%d-cert_signed.txt", i);
@@ -1450,6 +1400,7 @@ int main(int argc, char *argv[])
         exit(1);
     }
 
+    // Verifiy the Relinearization Keys were signed by the CA
     sprintf(directory, "Server");
     sprintf(filename, "Relin_key.txt");
     sprintf(signedfile, "Relin_key_signed.txt");
@@ -1463,7 +1414,7 @@ int main(int argc, char *argv[])
         cout << "Invalid Relin Keys signature" << endl;
         exit(1);
     }
-    //Verify signature of message
+    //Verify the query message was signed by the Client (whom autenticity was already confirmed)
     sprintf(directory, "Server");
     sprintf(filename, "Queries/Client%dQuery.zip", i);
     sprintf(signedfile, "Queries/signed_digest%d.txt", i);
@@ -1477,21 +1428,21 @@ int main(int argc, char *argv[])
         cout << "Invalid Query signature" << endl;
         exit(1);
     }
+    // Create SEALContext and load Relinearization keys
     SEALContext context = create_context(16384, 64);
-
     RelinKeys relin_keys;
-
     fstream fs;
     fs.open("Server/Relin_key.txt", fstream::binary | fstream::in);
     relin_keys.load(context, fs);
     fs.close();
-
+    //Create an instance of an Evaluator
     Evaluator evaluator(context);
 
+    // Unzip query folder
     sprintf(systemcall, "cd Server/Queries && unzip -qq Client%dQuery.zip", i);
     system(systemcall);
 
-    // Obtain server Public key and encrypt message
+    // Decrypt message with server private key
     sprintf(systemcall, "cd Server && openssl rsautl -decrypt -inkey server_pk.key -in Queries/Client%dQuery/msg_enc.txt -out Queries/Client%dQuery/msg.txt", i, i);
     system(systemcall);
     cout << "Message Decrypted" << endl;
@@ -1502,11 +1453,11 @@ int main(int argc, char *argv[])
     stringstream ss;
     ss << "Server/Queries/Client" << i << "Query";
     string qpath = ss.str();
-    //cout << qpath << endl;
+
     ss << "/"
        << "msg.txt";
     string msgpath = ss.str();
-    //cout << msgpath << endl;
+
     ifstream msg;
 
     msg.open(msgpath);
@@ -1535,9 +1486,10 @@ int main(int argc, char *argv[])
     // Sign the Result folder
     sprintf(systemcall, "cd Server && openssl dgst -sha256 -sign server_pk.key -out /tmp/sign.sha256 Result.zip");
     system(systemcall);
-    sprintf(systemcall, "cd Server && openssl base64 -in /tmp/sign.sha256 -out result_digest.txt %s", cmdout);
+    sprintf(systemcall, "cd Server && openssl base64 -in /tmp/sign.sha256 -out result_digest.txt");
     system(systemcall);
 
+    // Send result of the query to the Client
     sprintf(systemcall, "cd Server && mv Result.zip result_digest.txt ../Clients/Client%d", i);
     system(systemcall);
     // Delete contents of Result waiting for next query
