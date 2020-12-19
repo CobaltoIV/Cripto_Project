@@ -25,35 +25,6 @@ using namespace seal;
 int n_client;
 
 /**
- * @brief  retrives console output
- * @note
- * @param  cmd: Commend to be executed
- * @retval String with console output
- */
-string exec(const char *cmd)
-{
-    char buffer[128];
-    string result = "";
-    FILE *pipe = popen(cmd, "r");
-    if (!pipe)
-        throw runtime_error("popen() failed!");
-    try
-    {
-        while (fgets(buffer, sizeof buffer, pipe) != NULL)
-        {
-            result += buffer;
-        }
-    }
-    catch (...)
-    {
-        pclose(pipe);
-        throw;
-    }
-    pclose(pipe);
-    return result;
-}
-
-/**
  * @brief  Verifies signature of a file according to an authority
  * @note
  * @param  directory: Directory where the file is found
@@ -76,7 +47,7 @@ string verifysgn(char *directory, char *filename, char *signedfile, char *author
 }
 
 /**
- * @brief  checks if a file exists
+ * @brief  Checks if a file exists
  * @note
  * @param
  * @retval 1 if the file exists, 0 if it doesn't
@@ -99,6 +70,14 @@ int fileExists(string filename, string directory)
         return 0;
 }
 
+/**
+ * @brief Prints select according to the result of the comparisons executed in the Server
+ *
+ * @param tabledir : Table directory
+ * @param compdir : Directory with the result of the conditions per line
+ * @param context
+ * @param decryptor
+ */
 void print_select_where(char *tabledir, char *compdir, SEALContext context, Decryptor *decryptor)
 {
     DIR *folder;
@@ -131,9 +110,7 @@ void print_select_where(char *tabledir, char *compdir, SEALContext context, Decr
         }
         else if (entry->d_type == DT_DIR) // if the entry is a folder(only folder inside table directory would be the collumn folder)
         {
-            // open directory
-            //cout << entry->d_name << endl;
-            // Get collumn in vector
+            // Get collumn directory in vector
             ss << tabledir << "/" << entry->d_name;
             cols.push_back(ss.str());
             ss.str(string());
@@ -156,40 +133,39 @@ void print_select_where(char *tabledir, char *compdir, SEALContext context, Decr
         {
             // do nothing (straight logic)
         }
-        else if (entry->d_type == DT_DIR) // if the entry is a folder(only folder inside table directory would be the collumn folder)
+        else if (entry->d_type == DT_DIR) // For each line
         {
-            // open directory
-            //cout << entry->d_name << endl;
-
+            // Get path for the result of the comparison for that line
             ss << compdir << "/" << entry->d_name;
             fullpath = ss.str();
             auxpath = &fullpath[0];
             ss.str(string());
+            // Load result of the comparison and decrypt it
             comp = load_hom_enc(auxpath, compfile, context);
-
             (*decryptor).decrypt(comp, result);
             cp = result.to_string();
-            // if condition was respected
+
+            // if condition was respected print line
             if (cp.compare("1") == 0)
             {
                 cout << entry->d_name << "  ||  ";
                 for (int i = 0; i < cols.size(); i++)
                 {
                     col = cols[i];
-                    //cout << col << endl;
                     // Get path to line dir
                     ss << col << "/" << entry->d_name;
                     numpath = ss.str();
                     npath = &numpath[0];
-                    //cout << npath << endl;
                     ss.str(string());
 
+                    // Get path to hexadecimal encryption
                     ss << entry->d_name << ".hex";
                     num = ss.str();
                     n = &num[0];
-
+                    // Load hexadecimal encryption
                     pos = load_hom_enc(npath, n, context);
                     (*decryptor).decrypt(pos, result);
+                    // Print result
                     cout << h2d(result.to_string()) << "  ||  ";
 
                     ss.str(string());
@@ -203,6 +179,13 @@ void print_select_where(char *tabledir, char *compdir, SEALContext context, Decr
     closedir(folder);
 }
 
+/**
+ * @brief Prints the selected content by user
+ *
+ * @param tabledir
+ * @param context
+ * @param decryptor
+ */
 void print_select(char *tabledir, SEALContext context, Decryptor *decryptor)
 {
     DIR *folder;
@@ -233,8 +216,6 @@ void print_select(char *tabledir, SEALContext context, Decryptor *decryptor)
         }
         else if (entry->d_type == DT_DIR) // if the entry is a folder(only folder inside table directory would be the collumn folder)
         {
-            // open directory
-            //cout << entry->d_name << endl;
             // Get collumn in vector
             ss << tabledir << "/" << entry->d_name;
             cols.push_back(ss.str());
@@ -261,29 +242,27 @@ void print_select(char *tabledir, SEALContext context, Decryptor *decryptor)
         {
             // do nothing (straight logic)
         }
-        else if (entry->d_type == DT_DIR) // if the entry is a folder(only folder inside table directory would be the collumn folder)
+        else if (entry->d_type == DT_DIR) // For each line
         {
-            // open directory
-            //cout << entry->d_name << endl;
 
             cout << entry->d_name << "  ||  ";
             for (int i = 0; i < cols.size(); i++)
             {
                 col = cols[i];
-                //cout << col << endl;
+
                 // Get path to line dir
                 ss << col << "/" << entry->d_name;
                 numpath = ss.str();
                 npath = &numpath[0];
-                //cout << npath << endl;
                 ss.str(string());
 
                 ss << entry->d_name << ".hex";
                 num = ss.str();
                 n = &num[0];
-
                 pos = load_hom_enc(npath, n, context);
                 (*decryptor).decrypt(pos, result);
+
+                // Print entry
                 cout << h2d(result.to_string()) << "  ||  ";
 
                 ss.str(string());
@@ -296,6 +275,14 @@ void print_select(char *tabledir, SEALContext context, Decryptor *decryptor)
     closedir(folder);
 }
 
+/**
+ * @brief Parses the response sent by the server if the query was of type SELECT WHERE
+ *
+ * @param msg : Response sent by the server
+ * @param result_path :Path to the directory with the response of the Server
+ * @param context
+ * @param decryptor
+ */
 void read_select_where(string msg, string result_path, SEALContext context, Decryptor *decryptor)
 {
     string table, token, filepath, tablepath, comppath;
@@ -324,14 +311,24 @@ void read_select_where(string msg, string result_path, SEALContext context, Decr
     tablepath = ss.str();
     tabledir = &tablepath[0];
     ss.str(string());
-    cout << tabledir << endl;
+
+    // Get path to the folder with the results of the comparisons
     ss << result_path << "/Comp";
     comppath = ss.str();
     compdir = &comppath[0];
 
+    // Call printing routine
     print_select_where(tabledir, compdir, context, decryptor);
 }
 
+/**
+ * @brief Parses the response sent by the server if the query was of type SELECT
+ *
+ * @param msg
+ * @param result_path
+ * @param context
+ * @param decryptor
+ */
 void read_select(string msg, string result_path, SEALContext context, Decryptor *decryptor)
 {
     string table, token, filepath, tablepath;
@@ -360,27 +357,34 @@ void read_select(string msg, string result_path, SEALContext context, Decryptor 
     print_select(tabledir, context, decryptor);
 }
 
+/**
+ * @brief Reads response of the server and executes a subroutine for each of the response types
+ *
+ * @param msg
+ * @param result_path
+ * @param context
+ * @param decryptor
+ */
 void readResult(string msg, string result_path, SEALContext context, Decryptor *decryptor)
 {
     string s1 = "WHERE";
     string crt = "CREATE", ins = "INSERT", sel = "SELECT", del = "DELETE", sum = "SUM";
     stringstream ss;
 
-    //cout << query << endl;
 
-    if (msg.find(crt) != string::npos)
+    if (msg.find(crt) != string::npos) //If CREATE command
     {
         cout << msg << endl;
     }
-    else if (msg.find(ins) != string::npos)
+    else if (msg.find(ins) != string::npos) //If INSERT command
     {
         cout << msg << endl;
     }
-    else if (msg.find(del) != string::npos)
+    else if (msg.find(del) != string::npos) //If DELETE command
     {
         cout << msg << endl;
     }
-    else if (msg.find(sum) != string::npos)
+    else if (msg.find(sum) != string::npos) //If SUM command
     {
         Ciphertext res;
         Plaintext result;
@@ -399,17 +403,23 @@ void readResult(string msg, string result_path, SEALContext context, Decryptor *
         {
             read_select_where(msg, result_path, context, decryptor);
         }
-        else
+        else //if no conditions
         {
             read_select(msg, result_path, context, decryptor);
         }
     }
-    else
+    else // If none of the above print the msg because it's an error message
     {
         cout << msg << endl;
     }
 }
 
+/**
+ * @brief Decrypt and load the message sent by the server
+ * 
+ * @param context 
+ * @param decryptor 
+ */
 void handleResult(SEALContext context, Decryptor *decryptor)
 {
     char systemcall[512] = "";
@@ -420,23 +430,31 @@ void handleResult(SEALContext context, Decryptor *decryptor)
     sprintf(systemcall, "cd Clients/Client%d && openssl rsautl -decrypt -inkey c%dpk.key -in Result/msg_enc.txt -out Result/msg.txt", n_client, n_client);
     system(systemcall);
 
+    // Get path to Result folder
     ss << "Clients/Client" << n_client << "/Result";
     result_path = ss.str();
+    // Get path to message
     ss << "/msg.txt";
     filepath = ss.str();
     ss.str(string());
 
+    // Load msg into an string
     fstream fb;
     fb.open(filepath, fstream::in);
     while (fb)
     {
         getline(fb, msg);
-        //cout << msg << endl;
     }
     fb.close();
     readResult(msg, result_path, context, decryptor);
 }
 
+/**
+ * @brief 
+ * 
+ * @param context 
+ * @param decryptor 
+ */
 void checkResult(SEALContext context, Decryptor *decryptor)
 {
     char filename[50] = "";
@@ -488,6 +506,14 @@ void checkResult(SEALContext context, Decryptor *decryptor)
     system(systemcall);
 }
 
+/**
+ * @brief 
+ * 
+ * @param values 
+ * @param context 
+ * @param encryptor 
+ * @param option 
+ */
 void encryptValues(string values, SEALContext context, Encryptor *encryptor, int option)
 {
 
@@ -541,6 +567,15 @@ void encryptValues(string values, SEALContext context, Encryptor *encryptor, int
     out.close();
 }
 
+/**
+ * @brief 
+ * 
+ * @param sql 
+ * @param context 
+ * @param encryptor 
+ * @param colname 
+ * @return int 
+ */
 int select_sum(string sql, SEALContext context, Encryptor *encryptor, string colname)
 {
     string delimiter = " ";
@@ -664,6 +699,15 @@ int select_sum(string sql, SEALContext context, Encryptor *encryptor, string col
     return 0;
 }
 
+/**
+ * @brief 
+ * 
+ * @param sql 
+ * @param context 
+ * @param encryptor 
+ * @param col1name 
+ * @return int 
+ */
 int select_query(string sql, SEALContext context, Encryptor *encryptor, string col1name)
 {
     cout << "query" << endl;
@@ -824,6 +868,12 @@ int select_query(string sql, SEALContext context, Encryptor *encryptor, string c
     return 0;
 }
 
+/**
+ * @brief 
+ * 
+ * @param sql 
+ * @return int 
+ */
 int select_line(string sql)
 {
     string delimiter = " ";
@@ -875,6 +925,15 @@ int select_line(string sql)
     return 0;
 }
 
+/**
+ * @brief 
+ * 
+ * @param sql 
+ * @param context 
+ * @param encryptor 
+ * @param col1name 
+ * @return int 
+ */
 int select(string sql, SEALContext context, Encryptor *encryptor, string col1name)
 {
     string delimiter = " ";
@@ -913,6 +972,12 @@ int select(string sql, SEALContext context, Encryptor *encryptor, string col1nam
     return -1;
 }
 
+/**
+ * @brief 
+ * 
+ * @param sql 
+ * @return int 
+ */
 int delete_row(string sql)
 {
     string delimiter = " ";
@@ -964,6 +1029,14 @@ int delete_row(string sql)
     return 0;
 }
 
+/**
+ * @brief 
+ * 
+ * @param sql 
+ * @param context 
+ * @param encryptor 
+ * @return int 
+ */
 int insert(string sql, SEALContext context, Encryptor *encryptor)
 {
     string delimiter = " ";
@@ -1155,6 +1228,12 @@ int insert(string sql, SEALContext context, Encryptor *encryptor)
     return 0;
 }
 
+/**
+ * @brief 
+ * 
+ * @param sql 
+ * @return int 
+ */
 int create(string sql)
 {
     string delimiter = " ";
@@ -1278,6 +1357,14 @@ int create(string sql)
     return 0;
 }
 
+/**
+ * @brief 
+ * 
+ * @param sql 
+ * @param context 
+ * @param encryptor 
+ * @return int 
+ */
 int handleQuery(string sql, SEALContext context, Encryptor *encryptor)
 {
     string delimiter = " ";
@@ -1321,6 +1408,10 @@ int handleQuery(string sql, SEALContext context, Encryptor *encryptor)
     }
 }
 
+/**
+ * @brief 
+ * 
+ */
 void deleteResidues()
 {
     char systemcall[512] = "";
@@ -1339,7 +1430,6 @@ int main(int argc, char *argv[])
 {
     int clientcount = 0;
     string sql;
-    char cmdout[256] = "";
     char systemcall[512] = "";
     char directory[50] = "";
     char filename[50] = "";
@@ -1352,10 +1442,9 @@ int main(int argc, char *argv[])
     {
         if (strcmp(argv[k], "-cid") == 0)
             n_client = atoi(argv[++k]);
-        //if (strcmp(argv[i], "-o") == 0) //verbose mode, using /dev/null to suppress console output
-        //	strcpy(cmdout, " > /dev/null 2>&1");
     }
 
+    // Verify the autenticity of Client Private Key and Certificate - They should be signed by the CA 
     sprintf(directory, "Clients/Client%d", n_client);
     sprintf(filename, "c%dpk.key", n_client);
     sprintf(signedfile, "c%dpk_signed.txt", n_client);
@@ -1383,6 +1472,7 @@ int main(int argc, char *argv[])
         exit(1);
     }
 
+    // Verify the autenticity of the Database Keys
     sprintf(directory, "Clients/Client%d", n_client);
     sprintf(filename, "DBprivate_key.txt");
     sprintf(signedfile, "DBprivate_key_signed.txt");
@@ -1411,6 +1501,7 @@ int main(int argc, char *argv[])
         exit(1);
     }
 
+    // Create SEALContext and load DB keys
     SEALContext context = create_context(16384, 64);
     PublicKey public_key;
     SecretKey secret_key;
@@ -1423,6 +1514,7 @@ int main(int argc, char *argv[])
     keyfile.open(filename, fstream::binary | fstream::in);
     secret_key.load(context, keyfile);
     keyfile.close();
+    // Create instances of the Encryptor and Decryptor from SEAL 
     Encryptor encryptor(context, public_key);
     Decryptor decryptor(context, secret_key);
 
@@ -1442,9 +1534,6 @@ int main(int argc, char *argv[])
         {
             break;
         }
-
-        //sql = "SELECT SUM(col) FROM table2";
-        //sql = "SELECT SUM(col) FROM table2 WHERE col1 < 1 AND col2 < 2";
 
         //Create folder for the query
         sprintf(systemcall, "mkdir Client%dQuery", n_client);
@@ -1486,13 +1575,32 @@ int main(int argc, char *argv[])
         //Sign zip with private key from client
         sprintf(systemcall, "cd Clients/Client%d && openssl dgst -sha256 -sign c%dpk.key -out /tmp/sign.sha256 Client%dQuery.zip", n_client, n_client, n_client);
         system(systemcall);
-        sprintf(systemcall, "cd Clients/Client%d && openssl base64 -in /tmp/sign.sha256 -out signed_digest%d.txt %s", n_client, n_client, cmdout);
+        sprintf(systemcall, "cd Clients/Client%d && openssl base64 -in /tmp/sign.sha256 -out signed_digest%d.txt", n_client, n_client);
         system(systemcall);
 
         cout << "zip criado e assinado" << endl;
         getline(cin, sql);
 
-        /*
+        //Send Query to server
+        sprintf(systemcall, " mv Clients/Client%d/Client%dQuery.zip Clients/Client%d/signed_digest%d.txt -t Server/Queries", n_client, n_client, n_client, n_client);
+        system(systemcall);
+
+        //Delete non encrypted version of the message in the client folder
+        sprintf(systemcall, "cd Clients/Client%d && rm msg.txt", n_client);
+        system(systemcall);
+
+        cout << "end of client api" << endl;
+        getline(cin, sql);
+        sprintf(systemcall, "./serverapi -cid %d", n_client);
+        system(systemcall);
+
+        checkResult(context, &decryptor);
+    }
+
+    return 0;
+}
+
+ /*
         cout << "pasta apagada" << endl;
         getline(cin, sql);
 
@@ -1521,22 +1629,3 @@ int main(int argc, char *argv[])
         sprintf(systemcall, "cd Clients/Client%d && mv msg_enc.txt signed_digest.txt ../../Client%dQuery", n_client, n_client);
         system(systemcall);
         */
-
-        //Send Query to server
-        sprintf(systemcall, " mv Clients/Client%d/Client%dQuery.zip Clients/Client%d/signed_digest%d.txt -t Server/Queries", n_client, n_client, n_client, n_client);
-        system(systemcall);
-
-        //Delete non encrypted version of the message in the client folder
-        sprintf(systemcall, "cd Clients/Client%d && rm msg.txt", n_client);
-        system(systemcall);
-
-        cout << "end of client api" << endl;
-        getline(cin, sql);
-        sprintf(systemcall, "./serverapi -cid %d", n_client);
-        system(systemcall);
-
-        checkResult(context, &decryptor);
-    }
-
-    return 0;
-}

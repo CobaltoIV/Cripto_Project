@@ -17,6 +17,14 @@
 using namespace std;
 using namespace seal;
 
+/**
+ * @brief  Implements NOT gate
+ * @note   
+ * @param  a: input of gate
+ * @param  *evaluator: 
+ * @param  relinks: Keys for relinearization
+ * @retval 
+ */
 Ciphertext NOT(Ciphertext a, Evaluator *evaluator, RelinKeys relinks);
 
 /**

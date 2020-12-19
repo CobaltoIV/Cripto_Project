@@ -12,7 +12,7 @@ using namespace seal;
 
 /**
  * @brief  Implements NOT gate
- * @note   
+ * @note   NOT(b) = 1 - b
  * @param  a: input of gate
  * @param  *evaluator: 
  * @param  relinks: Keys for relinearization
@@ -23,14 +23,12 @@ Ciphertext NOT(Ciphertext a, Evaluator *evaluator, RelinKeys relinks)
     Ciphertext a_neg, result;
     Plaintext plain_one("1");
     (*evaluator).negate(a, a_neg);
-    //(*evaluator).relinearize_inplace(a_neg, relinks);
     (*evaluator).add_plain(a_neg, plain_one, result);
-    //(*evaluator).relinearize_inplace(result, relinks);
     return result;
 }
 /**
  * @brief  Implements AND gate
- * @note   
+ * @note   AND(a,b) = a*b
  * @param  a: Input 1
  * @param  b: Input 2
  * @param  *evaluator: 
@@ -92,8 +90,8 @@ Ciphertext lt(Ciphertext a, Ciphertext b, Evaluator *evaluator, RelinKeys relink
 }
 
 /**
- * @brief  Implementes equality condition through a XNOR
- * @note   
+ * @brief  Implementes equality condition through a AND of the negations of gt and lt
+ * @note   It is equivalent to a XNOR if gt and lt are expanded into their logical gates
  * @param  gt: 
  * @param  lt: 
  * @param  *evaluator: 
@@ -134,9 +132,11 @@ Ciphertext OR(Ciphertext a, Ciphertext b, Evaluator *evaluator, RelinKeys relink
 vector<Ciphertext> init_bit_comparator(Ciphertext A, Ciphertext B, Evaluator *evaluator, RelinKeys relinks)
 {
     vector<Ciphertext> result;
+    // Calculate first 2 comaprisons
     Ciphertext AgtB = gt(A, B, evaluator, relinks);
     Ciphertext AltB = lt(A, B, evaluator, relinks);
     result.push_back(AgtB);
+    // use the result of the previous 2 to determine equality
     result.push_back(XNOR(AgtB, AltB, evaluator, relinks));
     result.push_back(AltB);
     return result;
@@ -158,10 +158,11 @@ vector<Ciphertext> bit_comparator(Ciphertext A, Ciphertext B, Evaluator *evaluat
     Ciphertext nAgtB, nAeqB, nAltB;
     // get comparison results between the 2 bits
     curr = init_bit_comparator(A, B, evaluator, relinks);
-    // Fix them to the previuos comparison value if the A<B or A>B was already verified
+    // Fix them to the previous comparison value if the A<B or A>B was already verified
     nAgtB = AND(OR(curr[0], prev[0], evaluator, relinks), NOT(prev[2], evaluator, relinks), evaluator, relinks);
     nAeqB = AND(curr[1], prev[1], evaluator, relinks);
     nAltB = AND(OR(curr[2], prev[2], evaluator, relinks), NOT(prev[0], evaluator, relinks), evaluator, relinks);
+    // Add the resdults in the rigth sequence
     result.push_back(nAgtB);
     result.push_back(nAeqB);
     result.push_back(nAltB);
@@ -169,7 +170,7 @@ vector<Ciphertext> bit_comparator(Ciphertext A, Ciphertext B, Evaluator *evaluat
 }
 
 /**
- * @brief  Implements full comparator which returns the result as a vector of 3 ciphertexts with the results of the 3 operations
+ * @brief  Implements full comparator which returns the result as a vector of 3 ciphertexts with the results of the 3 types of comparisons
  * @note   
  * @param  x: 
  * @param  y: 
@@ -189,8 +190,10 @@ vector<Ciphertext> full_homomorphic_comparator(vector<Ciphertext> x, vector<Ciph
     }
     int sz = x.size();
 
+    // First comparison doesn't have the previous bits as input
     curr = init_bit_comparator(x[0], y[0], evaluator, relinks);
 
+    // Iterate through the bits
     for (int i = 1; i < sz; i++)
     {
         curr = bit_comparator(x[i], y[i], evaluator, curr, relinks);

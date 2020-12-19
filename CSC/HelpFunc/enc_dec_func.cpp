@@ -2,6 +2,7 @@
 #include <iostream>
 #include <fstream>
 #include <iomanip>
+#include <numeric>
 #include <vector>
 #include <string>
 #include <stdio.h>
@@ -12,6 +13,35 @@
 
 using namespace std;
 using namespace seal;
+
+/**
+ * @brief  Retrives console output from an input command
+ * @note
+ * @param  cmd: Command to be executed
+ * @retval String with console output
+ */
+string exec(const char *cmd)
+{
+    char buffer[128];
+    string result = "";
+    FILE *pipe = popen(cmd, "r");
+    if (!pipe)
+        throw runtime_error("popen() failed!");
+    try
+    {
+        while (fgets(buffer, sizeof buffer, pipe) != NULL)
+        {
+            result += buffer;
+        }
+    }
+    catch (...)
+    {
+        pclose(pipe);
+        throw;
+    }
+    pclose(pipe);
+    return result;
+}
 
 /**
  * @brief  Creates file with wanted error message
@@ -251,10 +281,10 @@ void print_vec(vector<int> x)
 }
 
 /**
- * @brief  Takes a n into and converts it into an hexadecimal string
- * @note
- * @param  x:
- * @retval
+ * @brief Takes a decimal number (int) and converts it into an hexadecimal string
+ * 
+ * @param x 
+ * @return string 
  */
 string d2h(int x)
 {
@@ -305,7 +335,7 @@ vector<int> d2b(int n, int n_bit)
         result.insert(result.begin(), digit);
         i--;
     }
-    cout << "Sucessefully converted to bynary" << endl;
+    cout << "Sucessfully converted to bynary" << endl;
     return result;
 }
 
