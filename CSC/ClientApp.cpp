@@ -352,7 +352,6 @@ void read_select(string msg, string result_path, SEALContext context, Decryptor 
     tablepath = ss.str();
     tabledir = &tablepath[0];
     ss.str(string());
-    cout << tabledir << endl;
 
     print_select(tabledir, context, decryptor);
 }
@@ -393,7 +392,7 @@ void readResult(string msg, string result_path, SEALContext context, Decryptor *
         char *filename = &file[0];
         res = load_hom_enc(dir, filename, context);
         (*decryptor).decrypt(res, result);
-        cout << "SUM = " << result.to_string() << endl;
+        cout << "SUM = " << result.to_string() << endl; 
         cout << "SUM = " << h2d(result.to_string()) << endl;
     }
     else if (msg.find(sel) != string::npos)
@@ -450,7 +449,7 @@ void handleResult(SEALContext context, Decryptor *decryptor)
 }
 
 /**
- * @brief 
+ * @brief Checks if there's any response from the server to be read. Verifies the signature of the response and executes function to handle the response
  * 
  * @param context 
  * @param decryptor 
@@ -507,12 +506,13 @@ void checkResult(SEALContext context, Decryptor *decryptor)
 }
 
 /**
- * @brief 
+ * @brief Receives values to be encrypted. Calls function that encrypts the values and puts them in a folder. Writes the name of the folders instead of the original values 
+ *        in the message to be sent to the server
  * 
- * @param values 
+ * @param values list of the values to be encrypted
  * @param context 
  * @param encryptor 
- * @param option 
+ * @param option specifies if there's only one value to be encrypted or a list of values (option=0 means there's a list of values)
  */
 void encryptValues(string values, SEALContext context, Encryptor *encryptor, int option)
 {
@@ -521,7 +521,7 @@ void encryptValues(string values, SEALContext context, Encryptor *encryptor, int
     char systemcall[500];
     char directory[50];
     string output = " ";
-    int n_bit = 4;
+    int n_bit = 8;
 
     //Variables for value processing
     string delimiter = " ";
@@ -568,13 +568,13 @@ void encryptValues(string values, SEALContext context, Encryptor *encryptor, int
 }
 
 /**
- * @brief 
+ * @brief Parsing function. Handles the "SELECT SUM" command
  * 
- * @param sql 
+ * @param sql command inserted by the user without the initial "SELECT SUM (colname)"
  * @param context 
  * @param encryptor 
  * @param colname 
- * @return int 
+ * @return 1 if an error occured, 0 if no error is found
  */
 int select_sum(string sql, SEALContext context, Encryptor *encryptor, string colname)
 {
@@ -700,17 +700,17 @@ int select_sum(string sql, SEALContext context, Encryptor *encryptor, string col
 }
 
 /**
- * @brief 
+ * @brief Parsing function. Handles the "SELECT" (query table) command
  * 
- * @param sql 
+ * @param sql command inserted by the user without the initial "SELECT col1name"
  * @param context 
  * @param encryptor 
- * @param col1name 
- * @return int 
+ * @param col1name 1st collumn to be selected
+ * @return 1 if an error occured, 0 if no error is found
  */
 int select_query(string sql, SEALContext context, Encryptor *encryptor, string col1name)
 {
-    cout << "query" << endl;
+    
     size_t pos = 0;
     string delimiter = ",";
     string output = "SELECT ";
@@ -736,7 +736,7 @@ int select_query(string sql, SEALContext context, Encryptor *encryptor, string c
         return -1;
     }
 
-    cout << "col1name:" << col1name << "|" << endl;
+    
 
     delimiter = ", ";
     while ((pos = colnames.find(delimiter)) != colnames.npos)
@@ -869,10 +869,10 @@ int select_query(string sql, SEALContext context, Encryptor *encryptor, string c
 }
 
 /**
- * @brief 
+ * @brief Parsing function. Handles the "SELECT LINE" command
  * 
  * @param sql 
- * @return int 
+ * @return 1 if an error occured, 0 if no error is found
  */
 int select_line(string sql)
 {
@@ -926,15 +926,14 @@ int select_line(string sql)
 }
 
 /**
- * @brief 
+ * @brief Parsing function. Checks what type of "SELECT" command was inserted ("SELECT", "SELECT_LINE" or "SELECT_SUM") and the calls the specific handler.
  * 
- * @param sql 
+ * @param sql command inserted by the client without the word "SELECT"
  * @param context 
  * @param encryptor 
- * @param col1name 
- * @return int 
+ * @return 1 if an error occured, 0 if no error is found
  */
-int select(string sql, SEALContext context, Encryptor *encryptor, string col1name)
+int select(string sql, SEALContext context, Encryptor *encryptor)
 {
     string delimiter = " ";
     size_t pos = 0;
@@ -973,10 +972,10 @@ int select(string sql, SEALContext context, Encryptor *encryptor, string col1nam
 }
 
 /**
- * @brief 
+ * @brief Parsing function. Handles the "DELETE" command
  * 
- * @param sql 
- * @return int 
+ * @param sql command inserted by the client without the word "DELETE"
+ * @return 1 if an error occured, 0 if no error is found
  */
 int delete_row(string sql)
 {
@@ -1030,12 +1029,12 @@ int delete_row(string sql)
 }
 
 /**
- * @brief 
+ * @brief Parsing function. Handles the "INSERT INTO" command
  * 
- * @param sql 
+ * @param sql command inserted by the client without the word "INSERT"
  * @param context 
  * @param encryptor 
- * @return int 
+ * @return 1 if an error occured, 0 if no error is found
  */
 int insert(string sql, SEALContext context, Encryptor *encryptor)
 {
@@ -1046,7 +1045,7 @@ int insert(string sql, SEALContext context, Encryptor *encryptor)
     string args;
     string values;
 
-    //Get the word INSERT from the command
+    //Get the second from the command
     pos = sql.find(delimiter);
     string token = sql.substr(0, pos);
     sql.erase(0, pos + delimiter.length());
@@ -1229,10 +1228,10 @@ int insert(string sql, SEALContext context, Encryptor *encryptor)
 }
 
 /**
- * @brief 
+ * @brief Parsing function. Handles the "CREATE TABLE" command
  * 
- * @param sql 
- * @return int 
+ * @param sql command inserted by the user without the word "CREATE"
+ * @return 1 if an error occured, 0 if no error is found
  */
 int create(string sql)
 {
@@ -1358,12 +1357,12 @@ int create(string sql)
 }
 
 /**
- * @brief 
+ * @brief Parsing function. Checks the type of command that was inserted and calls it's specific handler
  * 
- * @param sql 
+ * @param sql command inserted by the client
  * @param context 
  * @param encryptor 
- * @return int 
+ * @return 1 if an error occured, 0 if no error is found
  */
 int handleQuery(string sql, SEALContext context, Encryptor *encryptor)
 {
@@ -1399,7 +1398,7 @@ int handleQuery(string sql, SEALContext context, Encryptor *encryptor)
 
     else if (token.compare("SELECT") == 0)
     {
-        return select(sql, context, encryptor, token);
+        return select(sql, context, encryptor);
     }
 
     else
@@ -1409,7 +1408,7 @@ int handleQuery(string sql, SEALContext context, Encryptor *encryptor)
 }
 
 /**
- * @brief 
+ * @brief Deletes residual files that were not previously deleted. These files only exist if the program was interrupted in a previous execution (CTRL + C) 
  * 
  */
 void deleteResidues()
@@ -1502,7 +1501,7 @@ int main(int argc, char *argv[])
     }
 
     // Create SEALContext and load DB keys
-    SEALContext context = create_context(16384, 64);
+    SEALContext context = create_context(16384, 256);
     PublicKey public_key;
     SecretKey secret_key;
     fstream keyfile;
@@ -1552,8 +1551,6 @@ int main(int argc, char *argv[])
         sprintf(systemcall, "mv msg.txt Clients/Client%d", n_client);
         system(systemcall);
 
-        cout << "end of handle query" << endl;
-        getline(cin, sql);
 
         //Obtain server Public key and encrypt message
         sprintf(systemcall, "cd Clients/Client%d && openssl x509 -pubkey -in server-cert.crt -out /tmp/serverpub.key ", n_client);
@@ -1578,9 +1575,6 @@ int main(int argc, char *argv[])
         sprintf(systemcall, "cd Clients/Client%d && openssl base64 -in /tmp/sign.sha256 -out signed_digest%d.txt", n_client, n_client);
         system(systemcall);
 
-        cout << "zip criado e assinado" << endl;
-        getline(cin, sql);
-
         //Send Query to server
         sprintf(systemcall, " mv Clients/Client%d/Client%dQuery.zip Clients/Client%d/signed_digest%d.txt -t Server/Queries", n_client, n_client, n_client, n_client);
         system(systemcall);
@@ -1589,43 +1583,13 @@ int main(int argc, char *argv[])
         sprintf(systemcall, "cd Clients/Client%d && rm msg.txt", n_client);
         system(systemcall);
 
-        cout << "end of client api" << endl;
-        getline(cin, sql);
+        cout << "Query sent to the Server" << endl;
         sprintf(systemcall, "./serverapi -cid %d", n_client);
         system(systemcall);
 
+        cout << "Response received from the Server" << endl;
         checkResult(context, &decryptor);
     }
 
     return 0;
 }
-
- /*
-        cout << "pasta apagada" << endl;
-        getline(cin, sql);
-
-        //Unzip the query folder
-        sprintf(systemcall, "unzip Client%dQuery.zip", n_client);
-        system(systemcall);
-
-        cout << "pasta descomprimida" << endl;
-        getline(cin, sql);
-        */
-
-        /*
-        // Obtain server Public key and encrypt message
-        sprintf(systemcall, "cd Clients/Client%d && openssl x509 -pubkey -in server-cert.crt -out /tmp/serverpub.key ", n_client);
-        system(systemcall);
-        sprintf(systemcall, "cd Clients/Client%d && openssl rsautl -encrypt -pubin -inkey /tmp/serverpub.key -in msg.txt -out msg_enc.txt",n_client);
-        system(systemcall);
-
-        //Sign message with private key from client
-        sprintf(systemcall, "cd Clients/Client%d && openssl dgst -sha256 -sign c%dpk.key -out /tmp/sign.sha256 msg_enc.txt", n_client,n_client);
-        system(systemcall);
-        sprintf(systemcall, "cd Clients/Client%d && openssl base64 -in /tmp/sign.sha256 -out signed_digest.txt %s", n_client,cmdout);
-        system(systemcall);
-
-        //Bundle query
-        sprintf(systemcall, "cd Clients/Client%d && mv msg_enc.txt signed_digest.txt ../../Client%dQuery", n_client, n_client);
-        system(systemcall);
-        */

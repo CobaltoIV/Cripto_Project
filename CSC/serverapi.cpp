@@ -1429,7 +1429,7 @@ int main(int argc, char *argv[])
         exit(1);
     }
     // Create SEALContext and load Relinearization keys
-    SEALContext context = create_context(16384, 64);
+    SEALContext context = create_context(16384, 256);
     RelinKeys relin_keys;
     fstream fs;
     fs.open("Server/Relin_key.txt", fstream::binary | fstream::in);

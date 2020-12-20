@@ -18,6 +18,11 @@ using namespace std;
 using namespace seal;
 
 /**
+ * This header files contains all the functions that compose the homormophic digital comparator.
+ */
+
+
+/**
  * @brief  Implements NOT gate
  * @note   
  * @param  a: input of gate

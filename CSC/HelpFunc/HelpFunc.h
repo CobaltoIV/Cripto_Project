@@ -21,7 +21,13 @@
 
 using namespace std;
 using namespace seal;
-
+/**
+ * This header contains subroutines which help the programs to:
+ *  - encrypt and decrypt homomorphically
+ *  - access files
+ *  - Some string parsing
+ *  - Conversions between strings and different numbering systems 
+ */
 
 /**
  * @brief  Retrives console output from an input command

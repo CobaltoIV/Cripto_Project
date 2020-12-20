@@ -24,7 +24,7 @@ using namespace seal;
 int main(int argc, char *argv[])
 {
 	int clientcount = 0;
-	char cmdout[256] = "";
+	char cmdout[55] = "";
 	char systemcall[512] = "";
 
 	//Handling input parameters
@@ -44,15 +44,15 @@ int main(int argc, char *argv[])
 	}
 
 	//Removes previous database configuration
-	system("rm -r Admin");
-	system("rm -r Server");
-	system("rm -r Clients");
+	system("rm -r -f Admin");
+	system("rm -r -f Server");
+	system("rm -r -f Clients");
 	//SEAL keys generation
 	EncryptionParameters parms(scheme_type::bfv);
 	size_t poly_modulus_degree = 16384;
 	parms.set_poly_modulus_degree(poly_modulus_degree);
 	parms.set_coeff_modulus(CoeffModulus::BFVDefault(poly_modulus_degree));
-	parms.set_plain_modulus(64);
+	parms.set_plain_modulus(256);
 	SEALContext context(parms);
 	KeyGenerator keygen(context);
 	PublicKey public_key;
