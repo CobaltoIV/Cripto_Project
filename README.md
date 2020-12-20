@@ -22,6 +22,8 @@ Pre-requisites:
  
 Our project consists of 3 executables (CA, App, serverapi). 
  
+ -> Compile the executables with the command $(cmake .) if SEAL library globally installed, else refer to SEAL git repository instructions.
+ 
  -> To setup the Database run the CA executable. This represents the administrator of the database. It will generate all the keys (for the Ca, server and clients) the homormophic keys for the database and it will also generate the certificates for all the entities.
    
     The command to run the executable CA: $(./CA -c number_of_clients -o) 
