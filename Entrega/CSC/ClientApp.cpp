@@ -392,7 +392,7 @@ void readResult(string msg, string result_path, SEALContext context, Decryptor *
         char *filename = &file[0];
         res = load_hom_enc(dir, filename, context);
         (*decryptor).decrypt(res, result);
-        cout << "SUM = " << result.to_string() << endl; 
+        //cout << "SUM = " << result.to_string() << endl; 
         cout << "SUM = " << h2d(result.to_string()) << endl;
     }
     else if (msg.find(sel) != string::npos)
@@ -480,6 +480,7 @@ void checkResult(SEALContext context, Decryptor *decryptor)
     if (verifysgn(directory, filename, signedfile, authority).find(verified) != string::npos)
     {
         cout << verified << "- Result" << endl;
+        cout << endl;
     }
     else
     {
@@ -1524,6 +1525,8 @@ int main(int argc, char *argv[])
     while (1)
     {
 
+        cout << endl;
+        cout << endl;
         cout << "Input Command:";
         sql = "";
         getline(cin, sql);
@@ -1586,7 +1589,8 @@ int main(int argc, char *argv[])
         cout << "Query sent to the Server" << endl;
         sprintf(systemcall, "./serverapi -cid %d", n_client);
         system(systemcall);
-
+        cout << endl;
+        cout << endl;
         cout << "Response received from the Server" << endl;
         checkResult(context, &decryptor);
     }

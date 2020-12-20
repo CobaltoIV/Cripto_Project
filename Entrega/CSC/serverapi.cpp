@@ -1385,6 +1385,10 @@ int main(int argc, char *argv[])
             i = atoi(argv[++k]);
     }
 
+    cout << endl;
+    cout << endl;
+    cout << "Server Messages:" << endl;
+
     //Verify Client Certificate was signed by the CA
     sprintf(directory, "Server");
     sprintf(filename, "c%d-cert.crt", i);
@@ -1445,7 +1449,7 @@ int main(int argc, char *argv[])
     // Decrypt message with server private key
     sprintf(systemcall, "cd Server && openssl rsautl -decrypt -inkey server_pk.key -in Queries/Client%dQuery/msg_enc.txt -out Queries/Client%dQuery/msg.txt", i, i);
     system(systemcall);
-    cout << "Message Decrypted" << endl;
+    
 
     sprintf(systemcall, "cd Server/Queries && rm Client%dQuery.zip && rm signed_digest%d.txt && cd Client%dQuery && rm msg_enc.txt", i, i, i);
     system(systemcall);
