@@ -1,7 +1,9 @@
 # Cripto_Project 2020
 
 87011 - Guilherme Mascarenhas
+
 87107 - Ricardo Antão
+
 87126 - Tiago Silvério
 
 This file will have instructions to run the project correctly.
